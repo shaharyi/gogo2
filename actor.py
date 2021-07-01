@@ -8,9 +8,10 @@ class Actor:
     def __init__(self):
         self.greenlet = greenlet(self.process_message)
 
-    def process_message(self):
+    def process_message(self, data):
         while 1:
-            self.process_message_action(self.greenlet.receive())
+            self.process_message_action(data)
+            self.world.switch()
 
     def process_message_action(self,args):
         method_name= 'handle_'+args[1]

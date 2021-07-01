@@ -6,17 +6,18 @@ from pygame.rect import Rect
 
 
 class VectorActor(SpriteActor):
-    def __init__(self, vector, *args, **kwargs):
+    def __init__(self, angle=90, velocity=50, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.vector = vector
+        self.angle = angle
+        self.velocity = velocity
 
     def update(self):
-        (angle, z) = self.vector
+        (angle, z) = self.angle, self.velocity
         (dx, dy) = (z * math.cos(angle), z * math.sin(angle))
         self.rect = self.rect.move(dx, dy)
 
 
-class BasicRobot(SpriteActor):
+class BasicRobot(VectorActor):
     """A dumb robot that goes in circles
 
     Can take damage of bump() until hitpoints is down to zero.
@@ -31,7 +32,7 @@ class BasicRobot(SpriteActor):
     def take_damage(self, damage):
         self.hitpoints -= damage
         if self.hitpoints <= 0:
-            Explosion(center=self.rect.center, angle=self.angle, world=self.world)
+            Explosion(center=self.rect.center, angle=self.angle)
             self.die()
 
     def bump(self, damage=0):
@@ -46,7 +47,7 @@ class BasicRobot(SpriteActor):
         self.angle += 1
         if self.angle >= 360:
             self.angle -= 360
-        super.update()
+        super().update()
 
 
 class Explosion(SpriteActor):
@@ -54,7 +55,7 @@ class Explosion(SpriteActor):
         super().__init__(*args, **kwargs)
         self.time = 0.0
         self.physical = False
-        self.rect = Rect(self.center[0]-self.rect.w/2, self.center[1]-self.rect.h/2)
+        self.rect = Rect(self.rect.center)
 
     def update(self):
         self.time = self.time or time.time()   #init if zero
@@ -85,7 +86,7 @@ class Bullet(VectorActor):
         self.damage = 1
         self.hitpoints = 1
         self.velocity = 150
-        self.rect = Rect(center[0]-self.rect.w/2, center[1]-self.rect.h/2)
+        self.rect = Rect(self.rect.center)
 
     def bump(self, damage=0):  # hit a mine or a wall
         self.die()

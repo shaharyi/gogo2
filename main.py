@@ -9,6 +9,8 @@ import random
 import pygame
 from pygame.locals import *
 
+from sample_actors import *
+
 
 def main():
     # Initialise screen
