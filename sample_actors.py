@@ -1,13 +1,16 @@
 import time
 import math
 
-from actor import Actor, SpriteActor
 from pygame.rect import Rect
+import pygame
+
+from actor import Actor, SpriteActor
 
 
 class VectorActor(SpriteActor):
     def __init__(self, angle=90, velocity=50, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.image_angle = 0
         self.angle = angle
         self.velocity = velocity
 
@@ -15,6 +18,17 @@ class VectorActor(SpriteActor):
         (angle, z) = self.angle, self.velocity
         (dx, dy) = (z * math.cos(angle), z * math.sin(angle))
         self.rect = self.rect.move(dx, dy)
+        if self.image_angle != self.angle:
+            self.rotate()
+
+    def bump(self):
+        pass
+
+    def rotate(self):
+        """rotate image while keeping its center"""
+        self.image = pygame.transform.rotate(self.orig_image, self.angle)
+        self.rect = self.image.get_rect(center=self.rect.center)
+        self.image_angle = self.angle
 
 
 class BasicRobot(VectorActor):
@@ -63,11 +77,21 @@ class Explosion(SpriteActor):
             self.die()
 
 
-class Score(Actor):
-    def __init__(self):
-        super().__init__()
-        self.value=0
-        self.renderer_name='ScoreRenderer'
+class Score(SpriteActor):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.physical = False
+        self.value = 0
+        self.showing = -1
+        self.font = pygame.font.SysFont('serif', 24)
+
+    def update(self):
+        if self.value != self.showing:
+            # render(text, antialias, color (RGBA), background=None): return Surface
+            t = "%5d" % self.value
+            text = self.font.render(t, 1, (0, 0, 0, 0), (200, 200, 200))
+            self.image.blit(text, (0, 0))  # in location (0,0)
+            self.showing = self.value
 
 
 class Mine(SpriteActor):
@@ -81,12 +105,14 @@ class Mine(SpriteActor):
 
 
 class Bullet(VectorActor):
-    def __init__(self, center):
+    def __init__(self, shooter, center, angle):
         super().__init__()
+        self.shooter = shooter
+        self.angle = angle
         self.damage = 1
         self.hitpoints = 1
         self.velocity = 150
-        self.rect = Rect(self.rect.center)
+        self.rect = Rect(center=center)
 
     def bump(self, damage=0):  # hit a mine or a wall
         self.die()
@@ -140,13 +166,13 @@ class MinedropperRobot(SpriteActor):
             mineDistance += (self.rect.height / 2.0) ** 2
             mineDistance = math.sqrt(mineDistance)
 
-            VectorX, VectorY = (math.sin(math.radians(self.angle + self.delta)),
+            vectorX, vectorY = (math.sin(math.radians(self.angle + self.delta)),
                                 math.cos(math.radians(self.angle + self.delta)))
-            VectorX, VectorY = VectorX * mineDistance, VectorY * mineDistance
+            vectorX, vectorY = vectorX * mineDistance, vectorY * mineDistance
             x, y = self.rect.center
-            x -= VectorX
-            y += VectorY
-            Mine(center=(x, y))
+            x -= vectorX
+            y += vectorY
+            Mine(pos=(x, y))
         self.angle += self.delta
 
     def bump(self, damage=0):

@@ -1,4 +1,5 @@
 import math, time, sys
+
 from greenlet import greenlet
 import pygame, pygame.locals
 
@@ -29,9 +30,10 @@ class World(Actor):
     Sends actors snapshots of the world.
     Forward INPUT msgs to player (usually gotten from server).
     """
+    singleton = None
 
     def __init__(self):
-        World._singleton = self
+        World.singleton = self
         Actor.__init__(self)
         print("world id=", self.id)
         self.registeredActors = {}
@@ -40,7 +42,6 @@ class World(Actor):
         self.checkpoint = 0
         self.height = 496
         self.width = 496
-        self.collide = collide.get_dispatcher()
         greenlet(self.runFrame)
 
     def kill_dead_actors(self):
@@ -48,21 +49,19 @@ class World(Actor):
             _actor = self.registeredActors[id]
             if hasattr(_actor, 'hitpoints'):
                 if _actor.hitpoints <= 0:
-                    print
-                    "ACTOR", id, "DIED, hitpoints=", self.registeredActors[id].hitpoints
+                    print("ACTOR", id, "DIED, hitpoints=", self.registeredActors[id].hitpoints)
                     _actor.channel.send_exception(TaskletExit)
                     del self.registeredActors[id]
-                    del Actor.actors[id]
 
     def test_collision_with_actor(self, _actor):
-        x, y = roundtup(_actor.location)
+        x, y = map(round, _actor.rect.topleft)
         w, h = _actor.rect.size
         left, right = (x < 0), (x + w > self.width)
         top, bottom = (y < 0), (y + h > self.height)
         return left, right, top, bottom
 
     def scanActorImpacts(self):
-        util_pygame.SpriteActor.sprite_group.update(self.updateRate)
+        SpriteActor.sprite_group.update()
         coll_group = pygame.sprite.Group()
         for id in self.registeredActors.keys():
             _actor = self.registeredActors[id]
@@ -111,16 +110,14 @@ class World(Actor):
             percentUtilized = (doneProcessingTime - startTime) / (1.0 / self.updateRate)
             if percentUtilized >= 1:
                 self.updateRate -= 1
-                print
-                "TOO MUCH PROCESSING, LOWERING FRAME RATE: ", self.updateRate
+                print("TOO MUCH PROCESSING, LOWERING FRAME RATE: ", self.updateRate)
             elif percentUtilized <= 0.6 and self.updateRate < self.maxupdateRate:
                 self.updateRate += 1
-                print
-                "TOO MUCH FREETIME, RAISING FRAME RATE: ", self.updateRate
+                print("TOO MUCH FREETIME, RAISING FRAME RATE: ", self.updateRate)
             while time.time() < calculatedEndTime:
-                stackless.schedule()
+                self.greenlet.parent.switch()
             startTime = calculatedEndTime
-            stackless.schedule()
+            self.greenlet.parent.switch()
 
     def defaultMessageAction(self, args):
         sentFrom, msg, msgArgs = args[0], args[1], args[2:]
