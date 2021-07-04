@@ -22,7 +22,7 @@ def main():
     # ball = Mine((0,0),(0.47,speed))
     score_loc = PlayerActor.nplayers == 1 and (0, 0) or (screen.get_width() - 50, 0)
     score = Score(topleft=score_loc)
-    player1 = PlayerActor(location = screen.get_rect().center, score=score)
+    player1 = PlayerActor(topleft=screen.get_rect().center, score=score)
     # Initialise sprites
     playersprites = pygame.sprite.RenderPlain((player1, ))
 
@@ -36,10 +36,10 @@ def main():
     # Event loop
     while 1:
         # Make sure game doesn't run at more than 60 frames per second
-        clock.tick(60)
+        clock.tick(30)
 
         for event in pygame.event.get():
-            if event.type == QUIT:
+            if event.type == QUIT or (event.type==pygame.KEYDOWN and event.key==pygame.K_ESCAPE):
                 return
             player1.process_input(event)
 

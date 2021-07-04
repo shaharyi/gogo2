@@ -8,16 +8,17 @@ from actor import Actor, SpriteActor
 
 
 class VectorActor(SpriteActor):
-    def __init__(self, angle=90, velocity=50, *args, **kwargs):
+    def __init__(self, angle_deg=0, velocity=0, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.image_angle = 0
-        self.angle = angle
+        self.angle = math.radians(angle_deg)
+        self.image_angle = self.angle
+        self.orig_image_angle = self.angle
         self.velocity = velocity
 
     def update(self):
-        (angle, z) = self.angle, self.velocity
-        (dx, dy) = (z * math.cos(angle), z * math.sin(angle))
-        self.rect = self.rect.move(dx, dy)
+        (a, m) = self.angle, self.velocity
+        (dx, dy) = (m * math.cos(a), m * math.sin(a))
+        self.rect = self.rect.move(dx, -dy)
         if self.image_angle != self.angle:
             self.rotate()
 
@@ -26,7 +27,8 @@ class VectorActor(SpriteActor):
 
     def rotate(self):
         """rotate image while keeping its center"""
-        self.image = pygame.transform.rotate(self.orig_image, self.angle)
+        rot_deg = math.degrees(self.angle - self.orig_image_angle)
+        self.image = pygame.transform.rotate(self.orig_image, rot_deg)
         self.rect = self.image.get_rect(center=self.rect.center)
         self.image_angle = self.angle
 
@@ -36,10 +38,9 @@ class BasicRobot(VectorActor):
 
     Can take damage of bump() until hitpoints is down to zero.
     """
-    MAX_VELOCITY = 100
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(velocity=50, angle=90, *args, **kwargs)
         self.hitpoints = 0
         self.old_rect = self.rect  # enable step-back on bumping an object
 
@@ -95,10 +96,10 @@ class Score(SpriteActor):
 
 
 class Mine(SpriteActor):
-    def __init__(self, pos, *args, **kwargs):
+    def __init__(self, center, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.hitpoints = 1
-        self.rect = pos
+        self.rect.center = center
 
     def bump(self):  # dropped over a wall
         self.die()
@@ -112,7 +113,7 @@ class Bullet(VectorActor):
         self.damage = 1
         self.hitpoints = 1
         self.velocity = 150
-        self.rect = Rect(center=center)
+        self.rect.center = center
 
     def bump(self, damage=0):  # hit a mine or a wall
         self.die()

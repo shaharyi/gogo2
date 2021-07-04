@@ -1,25 +1,28 @@
+from pdb import set_trace
 import math
 
-from pygame import K_RIGHT, K_LEFT, K_DOWN, K_UP, K_SPACE, K_m
+from pygame import K_RIGHT, K_LEFT, K_DOWN, K_UP, K_SPACE, K_m, KEYDOWN, KEYUP
 import pygame
 
 from util import *
-from sample_actors import BasicRobot, Mine, Bullet
+from sample_actors import VectorActor, Mine, Bullet
 
-THRUST = 5
-FRICTION = 3
-ANGLE_DELTA = 5
+THRUST = 1.5
+FRICTION = 1
+ANGLE_DELTA = 5*math.pi/180
+twoPI = 2*math.pi
 
 # player 1 keyboard mapping
-p1_key_down_reversed = dict(left=K_RIGHT, right=K_LEFT, forward=K_UP, backward=K_DOWN, shoot=K_SPACE, drop_mine=K_m)
+p1_key_down_reversed = dict(left=K_LEFT, right=K_RIGHT, forward=K_UP, backward=K_DOWN, shoot=K_SPACE, drop_mine=K_m)
 p1_key_down = {v: k for k, v in p1_key_down_reversed.items()}
 p1_key_up_reversed = dict(center=K_RIGHT, center_=K_LEFT, stop=K_UP, stop_=K_DOWN)
 p1_key_up = {v: k.strip('_') for k, v in p1_key_up_reversed.items()}
-mappings_down = [p1_key_down]
-mappings_up = [p1_key_up]
+
+# for now, we only have player 1 mapping
+mappings = {KEYDOWN: [p1_key_down,], KEYUP: [p1_key_up,]}
 
 
-class PlayerActor(BasicRobot):
+class PlayerActor(VectorActor):
     """Player sprite
 
     Respon:
@@ -31,25 +34,24 @@ class PlayerActor(BasicRobot):
     Receive INPUT msgs (originated at Client Display, forwarded by Server) and change velocity/angle accordingly.
     """
     nplayers = 0
+    MAX_VELOCITY = 10
 
-    def __init__(self, location, score, number=0):
+    def __init__(self, topleft, score, number=0):
         # location = location or (PlayerActor.nplayers%2 and 50  or World._singleton.width-50, 250)
-        super().__init__(location=location)
+        image_file = self.__class__.__name__ + str(number+1)
+        super().__init__(topleft=topleft, image_file=image_file, angle_deg=90)
         self.score = score
-        self.angle = 90
         self.angle_d = 0
-        self.velocity = 0
         self.hitpoints = 20
         self.thrust = 0
-        self.image_file = self.__class__.__name__ + str(number) + IMAGE_EXT
-        self.kmap_down = {k: getattr(self, v) for k, v in mappings_down[number]}
-        self.kmap_up = {k: getattr(self, v) for k, v in mappings_up[number]}
+        kmap_down = {k: getattr(self, v) for k, v in mappings[KEYDOWN][number].items()}
+        kmap_up = {k: getattr(self, v) for k, v in mappings[KEYUP][number].items()}
+        self.kmap = {KEYDOWN: kmap_down, KEYUP: kmap_up}
 
     def process_input(self, event):
-        if event.type == pygame.KEYDOWN:
-            self.kmap_down[event.key]()
-        elif event.type == pygame.KEYUP:
-            self.kmap_up[event.key]()
+        mapping = self.kmap.get(event.type)
+        action = mapping and mapping.get(event.key)
+        action and action()
 
     def drop_mine(self):
         mineDistance =  self.rect.h
@@ -62,7 +64,7 @@ class PlayerActor(BasicRobot):
         Mine(center=loc)
 
     def shoot(self):
-        distance =  self.rect.h
+        distance = self.rect.h
         v = [math.cos(math.radians(self.angle+90)),
              math.sin(math.radians(self.angle+90))]
         loc= [0,0]
@@ -79,16 +81,16 @@ class PlayerActor(BasicRobot):
         self.thrust = THRUST
 
     def backward(self):
-        self.thrust = THRUST
+        self.thrust = -THRUST
 
     def stop(self):
         self.thrust = 0
 
     def right(self):
-        self.angle_d = +ANGLE_DELTA
+        self.angle_d = -ANGLE_DELTA
 
     def left(self):
-        self.angle_d = -ANGLE_DELTA
+        self.angle_d = +ANGLE_DELTA
 
     def center(self):
         self.angle_d = 0
@@ -103,5 +105,5 @@ class PlayerActor(BasicRobot):
         d_v = self.thrust - sign(self.velocity)*FRICTION
         self.velocity += abs(self.velocity+d_v)<=self.MAX_VELOCITY and d_v or 0
         self.angle += self.angle_d
-        self.angle = self.angle<0 and self.angle%-360 or self.angle%360
+        self.angle = self.angle<0 and self.angle%-twoPI or self.angle%twoPI
         super().update()
