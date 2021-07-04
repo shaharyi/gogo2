@@ -2,10 +2,9 @@ from pdb import set_trace
 import math
 
 from pygame import K_RIGHT, K_LEFT, K_DOWN, K_UP, K_SPACE, K_m, KEYDOWN, KEYUP
-import pygame
 
 from util import *
-from sample_actors import VectorActor, Mine, Bullet
+from sample_actors import Robot, Mine, Bullet
 
 THRUST = 1.5
 FRICTION = 1
@@ -23,7 +22,7 @@ p1_key_up = {v: k.strip('_') for k, v in p1_key_up_reversed.items()}
 mappings = {KEYDOWN: [p1_key_down,], KEYUP: [p1_key_up,]}
 
 
-class PlayerActor(VectorActor):
+class PlayerActor(Robot):
     """Player sprite
 
     Respon:
@@ -40,7 +39,7 @@ class PlayerActor(VectorActor):
     def __init__(self, topleft, score, number=0, groups=()):
         # location = location or (PlayerActor.nplayers%2 and 50  or World._singleton.width-50, 250)
         image_file = self.__class__.__name__ + str(number+1)
-        super().__init__(topleft=topleft, image_file=image_file, angle_deg=90, groups=groups)
+        super().__init__(topleft=topleft, image_file=image_file, velocity=0, angle_deg=90, groups=groups)
         self.score = score
         self.angle_d = 0
         self.hitpoints = 20
@@ -55,21 +54,18 @@ class PlayerActor(VectorActor):
         action and action()
 
     def drop_mine(self):
-        distance = self.rect.h
-        v = [math.cos(self.angle + halfPI),
-             math.sin(self.angle + halfPI)]
-        loc = [0,0]
-        for d in (0,1):
-            v[d] *= distance
-            loc[d] = self.rect[d] + self.rect[d+2]/2 + v[d]
-        Mine(center=loc, groups=self.groups())
-
-    def shoot(self):
         center = self.rect.center
         d = self.rect.h
         v = [d*math.cos(self.angle + halfPI) + center[0],
              d*math.sin(self.angle + halfPI) + center[1]]
-        Bullet(shooter=self, center=center, angle=self.angle, groups=self.groups())
+        Mine(center=v, groups=self.groups())
+
+    def shoot(self):
+        center = self.rect.center
+        d = self.rect.h
+        v = [center[0] - d*math.cos(self.angle + halfPI),
+             center[1] - d*math.sin(self.angle + halfPI)]
+        Bullet(shooter=self, center=v, angle=self.angle, groups=self.groups())
 
     def killed_actor(self, _target):
         "Called when we kill another player or robot"
@@ -92,12 +88,6 @@ class PlayerActor(VectorActor):
 
     def center(self):
         self.angle_d = 0
-
-    def bump(self, damage=0):
-        # bump wall or another robot
-        self.rect = self.old_rect
-        self.velocity = 0
-        if damage: self.take_damage(damage)
 
     def update(self):
         d_v = self.thrust - sign(self.velocity)*FRICTION

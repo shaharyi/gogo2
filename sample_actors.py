@@ -35,46 +35,58 @@ class VectorActor(SpriteActor):
         self.image_angle = self.angle
 
 
-class BasicRobot(VectorActor):
-    """A dumb robot that goes in circles
-
-    Can take damage of bump() until hitpoints is down to zero.
+class Robot(VectorActor):
+    """Can take damage of bump() until hitpoints is down to zero.
     """
-
-    def __init__(self, velocity=50, *args, **kwargs):
-        super().__init__(velocity=velocity, angle_deg=90, *args, **kwargs)
-        self.hitpoints = 0
+    def __init__(self, velocity=20, angle_deg=90, *args, **kwargs):
+        super().__init__(velocity=velocity, angle_deg=angle_deg, *args, **kwargs)
+        self.hitpoints = 1
         self.old_rect = self.rect  # enable step-back on bumping an object
 
     def take_damage(self, damage):
         self.hitpoints -= damage
         if self.hitpoints <= 0:
-            Explosion(center=self.rect.center, angle=self.angle)
+            Explosion(center=self.rect.center, angle=self.angle, groups=self.groups())
             self.die()
 
     def bump(self, damage=0):
         self.rect = self.old_rect
-        self.angle += 73.0
-        if self.angle >= 360:
-            self.angle -= 360
+        self.velocity = 0
         if damage: self.take_damage(damage)
 
     def update(self):
         self.old_rect = self.rect
+        super().update()
+
+
+class BasicRobot(Robot):
+    """A dumb robot that goes in circles
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def bump(self, damage=0):
+        self.rect = self.old_rect
+        self.angle += radians(73)
+        if self.angle >= 4*pi:
+            self.angle -= 4*pi
+        if damage: self.take_damage(damage)
+
+    def update(self):
         self.angle += radians(1)
         if self.angle >= 4*pi:
             self.angle -= 4*pi
         super().update()
 
 
-class Explosion(SpriteActor):
+class Explosion(VectorActor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.time = 0.0
         self.physical = False
-        self.rect = Rect(self.rect.center)
 
     def update(self):
+        super().update()
         self.time = self.time or time.time()   #init if zero
         if time.time() >= self.time + 3.0:
             self.die()
@@ -132,7 +144,7 @@ class HWall(Wall):
     pass
 
 
-class MinedropperRobot(VectorActor):
+class MinedropperRobot(Robot):
     def __init__(self, velocity=1, angle=radians(135), *args, **kwargs):
         super().__init__(velocity=velocity, angle=angle, *args, **kwargs)
         self.hitpoints = 20
@@ -175,12 +187,6 @@ class MinedropperRobot(VectorActor):
             self.angle -= 4*pi
         self.take_damage(damage)
 
-    def take_damage(self, damage):
-        self.hitpoints -= damage
-        if self.hitpoints <= 0:
-            Explosion(center=self.rect.center, angle=self.angle)
-            self.die()
-
 
 class Spawner(SpriteActor):
     def __init__(self, target_groups=None, *args, **kwargs):
@@ -192,9 +198,7 @@ class Spawner(SpriteActor):
         self.physical = False
         self.robots = []
         self.target_groups = target_groups
-        for name, klass in globals().items():
-            if name.endswith("Robot"):
-                self.robots.append(klass)
+        self.robots = (BasicRobot, MinedropperRobot)
 
     def update(self):
         if self.time == 0.0:

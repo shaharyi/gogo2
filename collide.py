@@ -5,14 +5,14 @@ from world import World
 
 
 @multimethod
-def collide(_actor: Actor, _wall: Wall):
-    _actor.bump()
+def collide(_a1: Actor, _a2: Actor):
+    # Default collision - do nothing
     return 1
 
 
 @multimethod
-def collide(_a1: Actor, _a2: Actor):
-    # Default collision - do nothing
+def collide(_actor: Actor, _wall: Wall):
+    _actor.bump()
     return 1
 
 

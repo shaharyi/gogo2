@@ -16,3 +16,13 @@ def log(s):
 
 def sign(x):
     return x > 0 and 1 or x < 0 and -1 or 0
+
+
+def get_all_subclasses(cls):
+    all_subclasses = []
+
+    for subclass in cls.__subclasses__():
+        all_subclasses.append(subclass)
+        all_subclasses.extend(get_all_subclasses(subclass))
+
+    return all_subclasses

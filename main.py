@@ -4,7 +4,7 @@ from pygame.locals import *
 
 from player_actor import PlayerActor
 from sample_actors import *
-
+from collide import collide
 
 def main():
     # Initialise screen
@@ -66,6 +66,13 @@ def main():
             screen.blit(background, sp.rect, sp.rect)
         spawner.update()
         dynamic_group.update()
+        coll_group = pygame.sprite.Group()
+        sprites = dynamic_group.sprites() + static_group.sprites()
+        for s in sprites:
+            collisions = pygame.sprite.spritecollide(s, coll_group, dokill=False)
+            coll_group.add(s)
+            for c in collisions:
+                collide(s, c)
         dynamic_group.draw(screen)
         pygame.display.flip()
 
