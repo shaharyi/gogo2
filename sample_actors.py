@@ -1,5 +1,7 @@
+from pdb import set_trace
 import time
-import math
+import random
+from math import degrees, radians, cos, sin, sqrt, pi
 
 from pygame.rect import Rect
 import pygame
@@ -8,16 +10,16 @@ from actor import Actor, SpriteActor
 
 
 class VectorActor(SpriteActor):
-    def __init__(self, angle_deg=0, velocity=0, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.angle = math.radians(angle_deg)
+    def __init__(self, angle_deg=0, angle=None, velocity=0, groups=(), *args, **kwargs):
+        super().__init__(groups=groups, *args, **kwargs)
+        self.angle = angle or radians(angle_deg)
         self.image_angle = self.angle
         self.orig_image_angle = self.angle
         self.velocity = velocity
 
     def update(self):
         (a, m) = self.angle, self.velocity
-        (dx, dy) = (m * math.cos(a), m * math.sin(a))
+        (dx, dy) = (m * cos(a), m * sin(a))
         self.rect = self.rect.move(dx, -dy)
         if self.image_angle != self.angle:
             self.rotate()
@@ -27,7 +29,7 @@ class VectorActor(SpriteActor):
 
     def rotate(self):
         """rotate image while keeping its center"""
-        rot_deg = math.degrees(self.angle - self.orig_image_angle)
+        rot_deg = degrees(self.angle - self.orig_image_angle)
         self.image = pygame.transform.rotate(self.orig_image, rot_deg)
         self.rect = self.image.get_rect(center=self.rect.center)
         self.image_angle = self.angle
@@ -39,8 +41,8 @@ class BasicRobot(VectorActor):
     Can take damage of bump() until hitpoints is down to zero.
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(velocity=50, angle=90, *args, **kwargs)
+    def __init__(self, velocity=50, *args, **kwargs):
+        super().__init__(velocity=velocity, angle_deg=90, *args, **kwargs)
         self.hitpoints = 0
         self.old_rect = self.rect  # enable step-back on bumping an object
 
@@ -59,9 +61,9 @@ class BasicRobot(VectorActor):
 
     def update(self):
         self.old_rect = self.rect
-        self.angle += 1
-        if self.angle >= 360:
-            self.angle -= 360
+        self.angle += radians(1)
+        if self.angle >= 4*pi:
+            self.angle -= 4*pi
         super().update()
 
 
@@ -106,14 +108,11 @@ class Mine(SpriteActor):
 
 
 class Bullet(VectorActor):
-    def __init__(self, shooter, center, angle):
-        super().__init__()
+    def __init__(self, shooter, center, angle, *args, **kwargs):
+        super().__init__(velocity=20, center=center, angle=angle, *args, **kwargs)
         self.shooter = shooter
-        self.angle = angle
         self.damage = 1
         self.hitpoints = 1
-        self.velocity = 150
-        self.rect.center = center
 
     def bump(self, damage=0):  # hit a mine or a wall
         self.die()
@@ -126,22 +125,16 @@ class Wall(SpriteActor):
 
 
 class VWall(Wall):
-    def __init__(self):
-        # img comes from class-name
-        super().__init__()
+    pass
 
 
 class HWall(Wall):
-    def __init__(self):
-        # img comes from class-name
-        super().__init__()
+    pass
 
 
-class MinedropperRobot(SpriteActor):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.angle = 135
-        self.velocity = 1
+class MinedropperRobot(VectorActor):
+    def __init__(self, velocity=1, angle=radians(135), *args, **kwargs):
+        super().__init__(velocity=velocity, angle=angle, *args, **kwargs)
         self.hitpoints = 20
         self.delta = 0.0
         self.deltaDirection = "up"
@@ -150,14 +143,14 @@ class MinedropperRobot(SpriteActor):
     def update(self):
         super().update()
         if self.deltaDirection == "up":
-            self.delta += 2
-            if self.delta > 15.0:
-                self.delta = 15.0
+            self.delta += radians(2)
+            if self.delta > radians(15.0):
+                self.delta = radians(15.0)
                 self.deltaDirection = "down"
         else:
-            self.delta -= 2
-            if self.delta < -15.0:
-                self.delta = -15.0
+            self.delta -= radians(2)
+            if self.delta < radians(-15.0):
+                self.delta = radians(-15.0)
                 self.deltaDirection = "up"
         if self.nextMine <= time.time():
             self.nextMine = time.time() + 1.0
@@ -165,21 +158,21 @@ class MinedropperRobot(SpriteActor):
 
             mineDistance = (self.rect.width / 2.0) ** 2
             mineDistance += (self.rect.height / 2.0) ** 2
-            mineDistance = math.sqrt(mineDistance)
+            mineDistance = sqrt(mineDistance)
 
-            vectorX, vectorY = (math.sin(math.radians(self.angle + self.delta)),
-                                math.cos(math.radians(self.angle + self.delta)))
+            vectorX, vectorY = (sin(self.angle + self.delta),
+                                cos(self.angle + self.delta))
             vectorX, vectorY = vectorX * mineDistance, vectorY * mineDistance
             x, y = self.rect.center
             x -= vectorX
             y += vectorY
-            Mine(pos=(x, y))
+            Mine(center=(x, y), groups=self.groups())
         self.angle += self.delta
 
     def bump(self, damage=0):
-        self.angle += 73.0
-        if self.angle >= 360:
-            self.angle -= 360
+        self.angle += radians(73.0)
+        if self.angle >= 4*pi:
+            self.angle -= 4*pi
         self.take_damage(damage)
 
     def take_damage(self, damage):
@@ -189,3 +182,26 @@ class MinedropperRobot(SpriteActor):
             self.die()
 
 
+class Spawner(SpriteActor):
+    def __init__(self, target_groups=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.time = 0.0
+        self.angle = 0
+        self.velocity = 0
+        self.hitpoints = 1
+        self.physical = False
+        self.robots = []
+        self.target_groups = target_groups
+        for name, klass in globals().items():
+            if name.endswith("Robot"):
+                self.robots.append(klass)
+
+    def update(self):
+        if self.time == 0.0:
+            self.time = time.time() + 0.5 # wait 1/2 second on start
+        elif time.time() >= self.time: # every five seconds
+            self.time = time.time() + 5.0
+            angle = random.random() * 4*pi;
+            velocity = random.random() * 20.0 + 1
+            newRobot = random.choice(self.robots)
+            newRobot(groups=self.target_groups, center=self.rect.center, angle=angle, velocity=velocity)

@@ -14,6 +14,7 @@ class Actor:
         self.greenlet = greenlet(self.msg_pump)
         self.world = world
         self.sprite = sprite
+        self.name = "%s#%d" % (self.__class__.__name__, self.id)
 
     def msg_pump(self, data):
         while 1:
@@ -36,8 +37,8 @@ class Actor:
 
 
 class SpriteActor(pygame.sprite.Sprite):
-    def __init__(self, image_file=None, topleft=None, center=None, world=None, *args):
-        super().__init__(*args)
+    def __init__(self, image_file=None, topleft=None, center=None, world=None, groups=()):
+        super().__init__(*groups)
         image_file = image_file or self.__class__.__name__
         filepath = os.path.join('data', image_file) + '.' + IMAGE_EXT
         log('* loading ' + filepath)

@@ -16,15 +16,34 @@ def main():
     background = pygame.Surface(screen.get_size())
     background = background.convert()
     background.fill((0, 0, 0))
+    background_orig = background.copy()
 
     # Initialise actors
     rand = ((0.1 * (random.randint(5,8))))
     # ball = Mine((0,0),(0.47,speed))
     score_loc = PlayerActor.nplayers == 1 and (0, 0) or (screen.get_width() - 50, 0)
     score = Score(topleft=score_loc)
-    player1 = PlayerActor(topleft=screen.get_rect().center, score=score)
+    dynamic_group = pygame.sprite.RenderPlain()
     # Initialise sprites
-    playersprites = pygame.sprite.RenderPlain((player1, ))
+    player1 = PlayerActor(topleft=screen.get_rect().center, score=score, groups=(dynamic_group,))
+
+    static_group = pygame.sprite.RenderPlain()
+    VWall(topleft=(370, 200), groups=(static_group,))
+    VWall(topleft=(370, 232), groups=(static_group,))
+    VWall(topleft=(370, 264), groups=(static_group,))
+    VWall(topleft=(370, 296), groups=(static_group,))
+    HWall(topleft=(378, 200), groups=(static_group,))
+    HWall(topleft=(378, 320), groups=(static_group,))
+
+    VWall(topleft=(100, 200), groups=(static_group,))
+    VWall(topleft=(100, 232), groups=(static_group,))
+    VWall(topleft=(100, 264), groups=(static_group,))
+    VWall(topleft=(100, 296), groups=(static_group,))
+    HWall(topleft=(76, 192), groups=(static_group,))
+    HWall(topleft=(76, 328), groups=(static_group,))
+    spawner = Spawner(topleft=(232, 232), target_groups=(dynamic_group,), groups=(static_group,))
+
+    static_group.draw(background)
 
     # Blit everything to the screen
     screen.blit(background, (0, 0))
@@ -43,9 +62,11 @@ def main():
                 return
             player1.process_input(event)
 
-        screen.blit(background, player1.rect, player1.rect)
-        playersprites.update()
-        playersprites.draw(screen)
+        for sp in dynamic_group.sprites():
+            screen.blit(background, sp.rect, sp.rect)
+        spawner.update()
+        dynamic_group.update()
+        dynamic_group.draw(screen)
         pygame.display.flip()
 
 

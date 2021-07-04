@@ -11,6 +11,7 @@ THRUST = 1.5
 FRICTION = 1
 ANGLE_DELTA = 5*math.pi/180
 twoPI = 2*math.pi
+halfPI = math.pi/2
 
 # player 1 keyboard mapping
 p1_key_down_reversed = dict(left=K_LEFT, right=K_RIGHT, forward=K_UP, backward=K_DOWN, shoot=K_SPACE, drop_mine=K_m)
@@ -36,10 +37,10 @@ class PlayerActor(VectorActor):
     nplayers = 0
     MAX_VELOCITY = 10
 
-    def __init__(self, topleft, score, number=0):
+    def __init__(self, topleft, score, number=0, groups=()):
         # location = location or (PlayerActor.nplayers%2 and 50  or World._singleton.width-50, 250)
         image_file = self.__class__.__name__ + str(number+1)
-        super().__init__(topleft=topleft, image_file=image_file, angle_deg=90)
+        super().__init__(topleft=topleft, image_file=image_file, angle_deg=90, groups=groups)
         self.score = score
         self.angle_d = 0
         self.hitpoints = 20
@@ -54,24 +55,21 @@ class PlayerActor(VectorActor):
         action and action()
 
     def drop_mine(self):
-        mineDistance =  self.rect.h
-        v = [math.cos(math.radians(self.angle+90)),
-             math.sin(math.radians(self.angle+90))]
-        loc= [0,0]
-        for d in (0,1):
-            v[d] *= mineDistance
-            loc[d] = self.rect[d+2] + self.rect[d+2]/2 + v[d]
-        Mine(center=loc)
-
-    def shoot(self):
         distance = self.rect.h
-        v = [math.cos(math.radians(self.angle+90)),
-             math.sin(math.radians(self.angle+90))]
-        loc= [0,0]
+        v = [math.cos(self.angle + halfPI),
+             math.sin(self.angle + halfPI)]
+        loc = [0,0]
         for d in (0,1):
             v[d] *= distance
-            loc[d] = self.rect[d+2] + self.rect[d+2]/2 - v[d]
-        Bullet(shooter=self, center=loc, angle=self.angle)
+            loc[d] = self.rect[d] + self.rect[d+2]/2 + v[d]
+        Mine(center=loc, groups=self.groups())
+
+    def shoot(self):
+        center = self.rect.center
+        d = self.rect.h
+        v = [d*math.cos(self.angle + halfPI) + center[0],
+             d*math.sin(self.angle + halfPI) + center[1]]
+        Bullet(shooter=self, center=center, angle=self.angle, groups=self.groups())
 
     def killed_actor(self, _target):
         "Called when we kill another player or robot"
