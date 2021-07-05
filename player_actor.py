@@ -56,20 +56,20 @@ class PlayerActor(Robot):
     def drop_mine(self):
         center = self.rect.center
         d = self.rect.h
-        v = [d*math.cos(self.angle + halfPI) + center[0],
-             d*math.sin(self.angle + halfPI) + center[1]]
+        v = [center[0] - d*math.cos(self.angle),
+             center[1] + d*math.sin(self.angle)]
         Mine(center=v, groups=self.groups())
 
     def shoot(self):
         center = self.rect.center
-        d = self.rect.h
-        v = [center[0] - d*math.cos(self.angle + halfPI),
-             center[1] - d*math.sin(self.angle + halfPI)]
+        d = 1
+        v = [center[0] + d*math.cos(self.angle),
+             center[1] - d*math.sin(self.angle)]
         Bullet(shooter=self, center=v, angle=self.angle, groups=self.groups())
 
     def killed_actor(self, _target):
         "Called when we kill another player or robot"
-        self.score.value += _target.__class__.__name__=='PlayerActor' and 100 or 10
+        self.score.value += _target.__class__.__name__ == 'PlayerActor' and 100 or 10
 
     def forward(self):
         self.thrust = THRUST
