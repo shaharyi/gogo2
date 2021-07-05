@@ -6,6 +6,29 @@ from player_actor import PlayerActor
 from sample_actors import *
 from collide import collide
 
+
+def check_boundaries(_actor, screen):
+    area = screen.get_rect()
+    x, y = map(round, _actor.rect.topleft)
+    w, h = _actor.rect.size
+    left, right = (x < 0), (x + w > area.width)
+    top, bottom = (y < 0), (y + h > area.height)
+    return left, right, top, bottom
+
+
+def handle_collisions(screen, static_group, dynamic_group):
+    coll_group = pygame.sprite.Group()
+    sprites = dynamic_group.sprites() + static_group.sprites()
+    for s in sprites:
+        where = check_boundaries(s, screen)
+        if any(where):  # with world boundaries
+            s.bump()
+        collisions = pygame.sprite.spritecollide(s, coll_group, dokill=False)
+        coll_group.add(s)
+        for c in collisions:
+            collide(s, c)
+
+
 def main():
     # Initialise screen
     pygame.init()
@@ -66,13 +89,7 @@ def main():
             screen.blit(background, sp.rect, sp.rect)
         spawner.update()
         dynamic_group.update()
-        coll_group = pygame.sprite.Group()
-        sprites = dynamic_group.sprites() + static_group.sprites()
-        for s in sprites:
-            collisions = pygame.sprite.spritecollide(s, coll_group, dokill=False)
-            coll_group.add(s)
-            for c in collisions:
-                collide(s, c)
+        handle_collisions(screen, static_group, dynamic_group)
         dynamic_group.draw(screen)
         pygame.display.flip()
 

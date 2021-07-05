@@ -17,19 +17,34 @@ def collide(_actor: Actor, _wall: Wall):
 
 
 @multimethod
-def collide(_actor:BasicRobot, _mine: Mine):
+def collide(_wall: Wall, _actor: Actor):
+    return collide(_actor, _wall)
+
+
+@multimethod
+def collide(_actor:Robot, _mine: Mine):
     _actor.bump(damage=25)
     _mine.die()
     return 1
 
 
 @multimethod
-def collide(_bullet: Bullet, _actor: BasicRobot):
+def collide(_mine: Mine, _actor:Robot):
+    return collide(_actor, _mine)
+
+
+@multimethod
+def collide(_bullet: Bullet, _actor: Robot):
     _actor.bump(damage=_bullet.damage)
     if _actor.hitpoints == 0:
         _bullet.shooter.killed_actor(_actor)
     _bullet.die()
     return 1
+
+
+@multimethod
+def collide(_actor: Robot, _bullet: Bullet):
+    return collide(_bullet, _actor)
 
 
 @multimethod
@@ -44,7 +59,7 @@ def collide(_actor: VectorActor, _world: World, where):
 
 
 @multimethod
-def collide(actor1: BasicRobot, actor2: BasicRobot):
+def collide(actor1: Robot, actor2: Robot):
     actor1.bump(damage=25)
     actor2.bump(damage=25)
 

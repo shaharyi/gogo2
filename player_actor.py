@@ -1,5 +1,5 @@
 from pdb import set_trace
-import math
+from math import sin, cos, pi
 
 from pygame import K_RIGHT, K_LEFT, K_DOWN, K_UP, K_SPACE, K_m, KEYDOWN, KEYUP
 
@@ -8,9 +8,7 @@ from sample_actors import Robot, Mine, Bullet
 
 THRUST = 1.5
 FRICTION = 1
-ANGLE_DELTA = 5*math.pi/180
-twoPI = 2*math.pi
-halfPI = math.pi/2
+ANGLE_DELTA = 5*pi/180
 
 # player 1 keyboard mapping
 p1_key_down_reversed = dict(left=K_LEFT, right=K_RIGHT, forward=K_UP, backward=K_DOWN, shoot=K_SPACE, drop_mine=K_m)
@@ -19,7 +17,7 @@ p1_key_up_reversed = dict(center=K_RIGHT, center_=K_LEFT, stop=K_UP, stop_=K_DOW
 p1_key_up = {v: k.strip('_') for k, v in p1_key_up_reversed.items()}
 
 # for now, we only have player 1 mapping
-mappings = {KEYDOWN: [p1_key_down,], KEYUP: [p1_key_up,]}
+mappings = {KEYDOWN: [p1_key_down, ], KEYUP: [p1_key_up, ]}
 
 
 class PlayerActor(Robot):
@@ -56,15 +54,15 @@ class PlayerActor(Robot):
     def drop_mine(self):
         center = self.rect.center
         d = self.rect.h
-        v = [center[0] - d*math.cos(self.angle),
-             center[1] + d*math.sin(self.angle)]
+        v = [center[0] - d * cos(self.angle),
+             center[1] + d * sin(self.angle)]
         Mine(center=v, groups=self.groups())
 
     def shoot(self):
         center = self.rect.center
-        d = 1
-        v = [center[0] + d*math.cos(self.angle),
-             center[1] - d*math.sin(self.angle)]
+        d = self.rect.h/4
+        v = [center[0] + d * cos(self.angle),
+             center[1] - d * sin(self.angle)]
         Bullet(shooter=self, center=v, angle=self.angle, groups=self.groups())
 
     def killed_actor(self, _target):
@@ -93,5 +91,5 @@ class PlayerActor(Robot):
         d_v = self.thrust - sign(self.velocity)*FRICTION
         self.velocity += abs(self.velocity+d_v)<=self.MAX_VELOCITY and d_v or 0
         self.angle += self.angle_d
-        self.angle = self.angle<0 and self.angle%-twoPI or self.angle%twoPI
+        self.angle = self.angle<0 and self.angle%(-2*pi) or self.angle%(2*pi)
         super().update()

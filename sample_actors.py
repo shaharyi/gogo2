@@ -70,7 +70,8 @@ class BasicRobot(Robot):
         self.angle += radians(73)
         if self.angle >= 4*pi:
             self.angle -= 4*pi
-        if damage: self.take_damage(damage)
+        if damage:
+            self.take_damage(damage)
 
     def update(self):
         self.angle += radians(1)
@@ -156,29 +157,21 @@ class MinedropperRobot(Robot):
         super().update()
         if self.deltaDirection == "up":
             self.delta += radians(2)
-            if self.delta > radians(15.0):
-                self.delta = radians(15.0)
+            if self.delta > radians(15):
+                self.delta = radians(15)
                 self.deltaDirection = "down"
         else:
             self.delta -= radians(2)
-            if self.delta < radians(-15.0):
-                self.delta = radians(-15.0)
+            if self.delta < radians(-15):
+                self.delta = radians(-15)
                 self.deltaDirection = "up"
         if self.nextMine <= time.time():
-            self.nextMine = time.time() + 1.0
-            mineX, mineY = self.rect.center
-
-            mineDistance = (self.rect.width / 2.0) ** 2
-            mineDistance += (self.rect.height / 2.0) ** 2
-            mineDistance = sqrt(mineDistance)
-
-            vectorX, vectorY = (sin(self.angle + self.delta),
-                                cos(self.angle + self.delta))
-            vectorX, vectorY = vectorX * mineDistance, vectorY * mineDistance
-            x, y = self.rect.center
-            x -= vectorX
-            y += vectorY
-            Mine(center=(x, y), groups=self.groups())
+            self.nextMine = time.time() + 5*random.random()
+            center = self.rect.center
+            d = self.rect.h
+            v = [center[0] - d * cos(self.angle),
+                 center[1] + d * sin(self.angle)]
+            Mine(center=v, groups=self.groups())
         self.angle += self.delta
 
     def bump(self, damage=0):
@@ -206,6 +199,6 @@ class Spawner(SpriteActor):
         elif time.time() >= self.time: # every five seconds
             self.time = time.time() + 5.0
             angle = random.random() * 4*pi;
-            velocity = random.random() * 20.0 + 1
+            velocity = random.random() * 10.0 + 1
             newRobot = random.choice(self.robots)
             newRobot(groups=self.target_groups, center=self.rect.center, angle=angle, velocity=velocity)
