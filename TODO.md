@@ -1,4 +1,2 @@
-* Collide has no reverse couples, see that it work.
-  for example actor-bullet, actor-mine
-  
-* Etc.
+* Split main.py into GUI and Client.
+* Set up Server and Client with comm, say with asyncio.
