@@ -1,23 +1,22 @@
 from multimethod import multimethod
 
 from sample_actors import *
-from world import World
 
 
 @multimethod
-def collide(_a1: Actor, _a2: Actor):
+def collide(_a1: SpriteActor, _a2: SpriteActor):
     # Default collision - do nothing
     return 1
 
 
 @multimethod
-def collide(_actor: Actor, _wall: Wall):
+def collide(_actor: SpriteActor, _wall: Wall):
     _actor.bump()
     return 1
 
 
 @multimethod
-def collide(_wall: Wall, _actor: Actor):
+def collide(_wall: Wall, _actor: SpriteActor):
     return collide(_actor, _wall)
 
 
@@ -45,17 +44,6 @@ def collide(_bullet: Bullet, _actor: Robot):
 @multimethod
 def collide(_actor: Robot, _bullet: Bullet):
     return collide(_bullet, _actor)
-
-
-@multimethod
-def collide(_mine: Mine, _world: World, where):
-    # if a mine is laid outside the world boundaries - erase it
-    _mine.die()
-
-
-@multimethod
-def collide(_actor: VectorActor, _world: World, where):
-    _actor.bump()
 
 
 @multimethod

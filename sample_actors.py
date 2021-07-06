@@ -6,7 +6,7 @@ from math import degrees, radians, cos, sin, sqrt, pi
 from pygame.rect import Rect
 import pygame
 
-from actor import Actor, SpriteActor
+from actor import SpriteActor
 
 
 class VectorActor(SpriteActor):
