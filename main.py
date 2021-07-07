@@ -42,8 +42,6 @@ def main():
     background_orig = background.copy()  # in case static sprites change
 
     # Initialise actors
-    rand = ((0.1 * (random.randint(5,8))))
-    # ball = Mine((0,0),(0.47,speed))
     score_loc = PlayerActor.nplayers == 1 and (0, 0) or (screen.get_width() - 50, 0)
     score = Score(topleft=score_loc)
     dynamic_group = pygame.sprite.RenderPlain()
