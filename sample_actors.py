@@ -3,19 +3,20 @@ import time
 import random
 from math import degrees, radians, cos, sin, sqrt, pi
 
-from pygame.rect import Rect
 import pygame
 
 from actor import SpriteActor
+from config import *
 
 
 class VectorActor(SpriteActor):
-    def __init__(self, angle_deg=0, angle=None, velocity=0, groups=(), *args, **kwargs):
+    def __init__(self, angle_deg=ORIG_ANGLE, angle=None, velocity=0, groups=(), *args, **kwargs):
         super().__init__(groups=groups, *args, **kwargs)
         self.angle = angle or radians(angle_deg)
         self.image_angle = self.angle
         self.orig_image_angle = self.angle
         self.velocity = velocity
+        self.render_props += ['angle']
 
     def update(self):
         (a, m) = self.angle, self.velocity
@@ -132,8 +133,8 @@ class Bullet(VectorActor):
 
 
 class Wall(SpriteActor):
-    def __init__(self, angle=0, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, topleft, groups, angle=0, *args, **kwargs):
+        super().__init__(topleft=topleft, groups=groups, *args, **kwargs)
         angle = angle
 
 

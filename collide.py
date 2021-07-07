@@ -3,6 +3,27 @@ from multimethod import multimethod
 from sample_actors import *
 
 
+def check_boundaries(_actor, rect):
+    x, y = map(round, _actor.rect.topleft)
+    w, h = _actor.rect.size
+    left, right = (x < 0), (x + w > rect.w)
+    top, bottom = (y < 0), (y + h > rect.h)
+    return left, right, top, bottom
+
+
+def handle_collisions(rect, groups):
+    coll_group = pygame.sprite.Group()
+    sprites = [s for sg in groups for s in sg.sprites()]
+    for s in sprites:
+        where = check_boundaries(s, rect)
+        if any(where):  # with world boundaries
+            s.bump()
+        collisions = pygame.sprite.spritecollide(s, coll_group, dokill=False)
+        coll_group.add(s)
+        for c in collisions:
+            collide(s, c)
+
+
 @multimethod
 def collide(_a1: SpriteActor, _a2: SpriteActor):
     # Default collision - do nothing

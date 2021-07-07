@@ -1,32 +1,10 @@
 import random
 import pygame
-from pygame.locals import *
+from pygame.locals import QUIT
 
 from player_actor import PlayerActor
-from sample_actors import *
-from collide import collide
-
-
-def check_boundaries(_actor, screen):
-    area = screen.get_rect()
-    x, y = map(round, _actor.rect.topleft)
-    w, h = _actor.rect.size
-    left, right = (x < 0), (x + w > area.width)
-    top, bottom = (y < 0), (y + h > area.height)
-    return left, right, top, bottom
-
-
-def handle_collisions(screen, groups):
-    coll_group = pygame.sprite.Group()
-    sprites = [s for sg in groups for s in sg.sprites()]
-    for s in sprites:
-        where = check_boundaries(s, screen)
-        if any(where):  # with world boundaries
-            s.bump()
-        collisions = pygame.sprite.spritecollide(s, coll_group, dokill=False)
-        coll_group.add(s)
-        for c in collisions:
-            collide(s, c)
+from sample_actors import HWall, VWall, Spawner, Score
+from collide import collide, handle_collisions, check_boundaries
 
 
 def main():
@@ -67,7 +45,7 @@ def main():
         clock.tick(30)
 
         for event in pygame.event.get():
-            if event.type == QUIT or (event.type==pygame.KEYDOWN and event.key==pygame.K_ESCAPE):
+            if event.type == QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                 return
             player1.process_input(event)
 
@@ -75,25 +53,25 @@ def main():
             screen.blit(background, sp.rect, sp.rect)
         spawner.update()
         dynamic_group.update()
-        handle_collisions(screen, (static_group, dynamic_group))
+        handle_collisions(screen.get_rect(), (static_group, dynamic_group))
         dynamic_group.draw(screen)
         pygame.display.flip()
 
 
 def create_walls(static_group):
-    VWall(topleft=(370, 200), groups=(static_group,))
-    VWall(topleft=(370, 232), groups=(static_group,))
-    VWall(topleft=(370, 264), groups=(static_group,))
-    VWall(topleft=(370, 296), groups=(static_group,))
-    HWall(topleft=(378, 200), groups=(static_group,))
-    HWall(topleft=(378, 320), groups=(static_group,))
-
-    VWall(topleft=(100, 200), groups=(static_group,))
-    VWall(topleft=(100, 232), groups=(static_group,))
-    VWall(topleft=(100, 264), groups=(static_group,))
-    VWall(topleft=(100, 296), groups=(static_group,))
-    HWall(topleft=(76, 192), groups=(static_group,))
-    HWall(topleft=(76, 328), groups=(static_group,))
+    g = (static_group, )
+    VWall((370, 200), g)
+    VWall((370, 232), g)
+    VWall((370, 264), g)
+    VWall((370, 296), g)
+    HWall((378, 200), g)
+    HWall((378, 320), g)
+    VWall((100, 200), g)
+    VWall((100, 232), g)
+    VWall((100, 264), g)
+    VWall((100, 296), g)
+    HWall((76, 192), g)
+    HWall((76, 328), g)
 
 
 if __name__ == '__main__':

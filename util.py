@@ -1,11 +1,13 @@
-import time
+from pdb import set_trace
+import pickle
+import struct
 
-DEBUG = True
+import pygame
 
-#logfile = open('/tmp/logs/%s.txt' % time.strftime('%Y%m%d_%H%M%S'), 'wt')
+from config import DEBUG
+
+# logfile = open('/tmp/logs/%s.txt' % time.strftime('%Y%m%d_%H%M%S'), 'wt')
 logfile = open('/tmp/gogo2.log', 'at')
-
-IMAGE_EXT = 'png'
 
 
 def log(s):
@@ -26,3 +28,32 @@ def get_all_subclasses(cls):
         all_subclasses.extend(get_all_subclasses(subclass))
 
     return all_subclasses
+
+
+def prepare_msg(data):
+    buf = pickle.dumps(data)
+    len1 = len(buf)
+    blen1 = struct.pack('i', len1)
+    return blen1 + buf
+
+
+def rotate(img, deg):
+    """rotate image while keeping its center and size"""
+    orig_rect = img.rect
+    image = pygame.transform.rotate(img, deg)
+    big_rect = image.get_rect(center=orig_rect.center)
+
+
+async def read_tcp_msg(reader):
+    l = await reader.read(4)
+    if len(l) <= 0:
+        return 0, ''
+    len1 = struct.unpack('i', l)[0]
+    r = 0
+    data = b''
+    while r < len1:
+        b = await reader.read(len1 - r)
+        data += b
+        r = len(data)
+    msg = pickle.loads(data)
+    return r, msg

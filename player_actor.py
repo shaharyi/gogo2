@@ -3,7 +3,7 @@ from math import sin, cos, pi
 
 from pygame import K_RIGHT, K_LEFT, K_DOWN, K_UP, K_SPACE, K_m, KEYDOWN, KEYUP
 
-from util import *
+from util import sign
 from sample_actors import Robot, Mine, Bullet
 
 THRUST = 1.5
@@ -37,7 +37,7 @@ class PlayerActor(Robot):
     def __init__(self, topleft, score, number=0, groups=()):
         # location = location or (PlayerActor.nplayers%2 and 50  or World._singleton.width-50, 250)
         image_file = self.__class__.__name__ + str(number+1)
-        super().__init__(topleft=topleft, image_file=image_file, velocity=0, angle_deg=90, groups=groups)
+        super().__init__(topleft=topleft, image_file=image_file, groups=groups)
         self.score = score
         self.angle_d = 0
         self.hitpoints = 20
@@ -46,9 +46,10 @@ class PlayerActor(Robot):
         kmap_up = {k: getattr(self, v) for k, v in mappings[KEYUP][number].items()}
         self.kmap = {KEYDOWN: kmap_down, KEYUP: kmap_up}
 
-    def process_input(self, event):
-        mapping = self.kmap.get(event.type)
-        action = mapping and mapping.get(event.key)
+    def process_input(self, event_data):
+        event_type, event_key = event_data
+        mapping = self.kmap.get(event_type)
+        action = mapping and mapping.get(event_key)
         action and action()
 
     def drop_mine(self):
