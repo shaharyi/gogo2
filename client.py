@@ -1,5 +1,8 @@
 from pdb import set_trace
 import sys
+import socket
+import string
+import struct
 from asyncio.protocols import DatagramProtocol
 import asyncio
 
@@ -34,7 +37,7 @@ def process_udp_msg(msg):
     op, pay = msg
     global surfaces
     surfaces = []
-    if op == 'WORLD_STATE':
+    if op == 'RENDER_DATA':
         surfaces = process_render_data(pay)
     else:
         util.log('Unknown msg: %s' % op)
@@ -46,10 +49,40 @@ class UDPClientProtocol(DatagramProtocol):
         self.transport = None
 
     def connection_made(self, transport):
+        print("UDP Connected")
         self.transport = transport
+        # message = 'hello'
+        # print('Send:', message)
+        # self.transport.sendto(message.encode())
+        if MCAST:
+            s = transport.get_extra_info("socket")
+            #
+            # Allow multiple copies of this program on one machine
+            # (not strictly needed)
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            #
+            # Bind it to the port
+            s.bind(('', UDP_PORT))
+            #
+            # Look up multicast group address in name server
+            # (doesn't hurt if it is already in ddd.ddd.ddd.ddd format)
+            group = socket.gethostbyname(MCAST_GROUP)
+            #
+            # Construct binary group address
+            bytes = map(int, group.split("."))
+            grpaddr = 0
+            for byte in bytes: grpaddr = (grpaddr << 8) | byte
+            #
+            # Construct struct mreq from grpaddr and ifaddr
+            ifaddr = socket.INADDR_ANY
+            mreq = struct.pack('ll', socket.htonl(grpaddr), socket.htonl(ifaddr))
+            #
+            # Add group membership
+            s.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+            #
 
     def datagram_received(self, data, addr):
-        print("Received:", data.decode())
+        # print("Received %d", len(data))
         msg = pickle.loads(data)
         process_udp_msg(msg)
 
@@ -61,12 +94,29 @@ class UDPClientProtocol(DatagramProtocol):
 
 
 async def main():
-    print('TCP connect')
     host = len(sys.argv) > 1 and sys.argv[1] or '127.0.0.1'
+    # Get a reference to the event loop as we plan to use
+    # low-level APIs.
+    loop = asyncio.get_running_loop()
+    ip = MCAST and MCAST_GROUP or LOCAL_IP
+    # s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    ## s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    # s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+    # s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    # s.bind(('192.168.1.255', 3001))
+    udp_transport, udp_protocol = await loop.create_datagram_endpoint(
+        UDPClientProtocol,  # sock=s)
+        local_addr=BCAST and (BCAST_IP, UDP_PORT) or None,
+        remote_addr=UCAST and (host, UDP_PORT) or None)
+    udp_local_addr = udp_transport.get_extra_info('sockname')
+    peer = udp_transport.get_extra_info('peername')
+    print(peer)
+
+    print('TCP connect')
     reader, writer = await asyncio.open_connection(host, TCP_PORT)
-    message = ('NEW_PLAYER', None)  # no args
+    message = ('NEW_PLAYER', udp_local_addr)
     msg = util.prepare_msg(message)
-    print(f'Send: {msg!r}')
+    print(f'Send: {message!r}')
     writer.write(msg)
     # if reached high watermark, drain down to lower watermark
     await writer.drain()
@@ -78,15 +128,6 @@ async def main():
         static_sprites = payload
     else:
         util.log('Unknown msg: ' + opcode)
-
-    # Get a reference to the event loop as we plan to use
-    # low-level APIs.
-    loop = asyncio.get_running_loop()
-
-    ip = MCAST and MCAST_GROUP or '127.0.0.1'
-    udp_transport, udp_protocol = await loop.create_datagram_endpoint(
-        UDPClientProtocol,
-        remote_addr=(ip, UDP_PORT))
 
     # Initialise screen
     pygame.init()
@@ -113,6 +154,8 @@ async def main():
     done = False
     # Event loop
     while not done and not udp_transport.is_closing():
+        # receive UDP packets
+        await asyncio.sleep(0.01)
         # Make sure game doesn't run at more than 60 frames per second
         clock.tick(30)
 
@@ -126,8 +169,9 @@ async def main():
                 msg = util.prepare_msg(('INPUT', event.type, event.key))
                 writer.write(msg)
         if not done:
+            screen.blit(background, (0, 0))
             for surf, pos in surfaces:
-                background.blit(surf, pos)
+                screen.blit(surf, pos)
             pygame.display.flip()
 
     print('Close UDP connection')

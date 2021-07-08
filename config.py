@@ -5,7 +5,12 @@ DEBUG = True
 
 IMAGE_EXT = 'png'
 
-MCAST = True
+MCAST = False
+BCAST = False
+UCAST = True  # Unicast
 MCAST_GROUP = '225.0.0.250'
-
+BCAST_IP = '192.168.1.255'  # local Broadcast ip
+LOCAL_IP = '192.168.1.110'
+SERVER_TCP_LOCAL_ADDR = '0.0.0.0'  # all interfaces
+SERVER_UDP_LOCAL_ADDR = LOCAL_IP
 ORIG_ANGLE = 90

@@ -31,6 +31,7 @@ class Server:
 
     def __init__(self):
         self.players = []
+        self.udp_peer_addr = {}
         self.screen_rect = Rect(0, 0, WIDTH, HEIGHT)
         self.dynamic_group = pygame.sprite.RenderPlain()
         self.static_group = pygame.sprite.RenderPlain()
@@ -54,14 +55,19 @@ class Server:
         HWall((76, 328), g)
 
     def broadcast(self):
-        groups = (self.static_group, self.dynamic_group, self.spawner_group)
+        groups = (self.dynamic_group, self.spawner_group)
         data = serialize_sprites(*groups)
-        buf = pickle.dumps(data)
-        self.transport.sendto(buf, ('192.168.1.255', 9000))
+        buf = pickle.dumps(('RENDER_DATA', data))
+        # ip = MCAST and MCAST_GROUP or BCAST_IP
+        for addr in self.udp_peer_addr.items():
+            # print('sending %d to %s' % (len(buf), addr))
+            self.transport.sendto(buf, addr)
 
     def process_tcp_msg(self, args, writer, player):
         opcode, payload = args[0], args[1:]
         if opcode in ('JOIN', 'NEW_PLAYER'):
+            ip, port = payload[0]
+            self.udp_peer_addr[ip] = port
             sprites_data = serialize_sprites(self.static_group)
             msg = util.prepare_msg(('STATIC_SPRITES', sprites_data))
             writer.write(msg)
@@ -81,11 +87,13 @@ class Server:
         done = False
         player = None
         while not done:
-            if writer.is_closing():
-                done = True
             r, msg = await util.read_tcp_msg(reader)
             print("server got (%d) from %s: %s " % (r, addr, str(msg)))
-            player = self.process_tcp_msg(msg, writer, player)
+            if r > 0:
+                player = self.process_tcp_msg(msg, writer, player)
+            else:
+                done = True
+        self.udp_peer_addr.pop(addr[0])
         writer.close()
         await writer.wait_closed()
 
@@ -97,21 +105,21 @@ class Server:
         def connection_made(self, transport):
             self.transport = transport
             print('UDP connection made')
-            sock = transport.get_extra_info("socket")
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            # sock = transport.get_extra_info("socket")
+            # sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             if MCAST:
+                sock = transport.get_extra_info("socket")
+                sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 0)
                 ttl = struct.pack('b', 1)  # Time-to-live
                 sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
-            else:
-                sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
         def datagram_received(self, data, addr):
-            message = data.decode()
-            print('UDP datagram received %r from %s' % (message, addr))
+            # message = data.decode()
+            print('UDP datagram received %d from %s' % (len(data), addr))
 
     async def main(self):
         print("Starting TCP server")
-        tcp_server = await asyncio.start_server(self.tcp_socket_handler, 'localhost', TCP_PORT)
+        tcp_server = await asyncio.start_server(self.tcp_socket_handler, SERVER_TCP_LOCAL_ADDR, TCP_PORT)
 
         addr = tcp_server.sockets[0].getsockname()
         print(f'Serving on {addr}')
@@ -122,9 +130,14 @@ class Server:
         loop = asyncio.get_running_loop()
         # One protocol instance will be created to serve all
         # client requests.
+        # s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        ## s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+        # s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         self.transport, protocol = await loop.create_datagram_endpoint(
-            self.UDPServerProtocol,
-            local_addr=('localhost', UDP_PORT))
+            self.UDPServerProtocol, # sock=s)
+            # allow_broadcast=True,
+            local_addr=(SERVER_UDP_LOCAL_ADDR, UDP_PORT))
 
         pygame.font.init()  # for Score
 

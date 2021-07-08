@@ -39,9 +39,10 @@ def prepare_msg(data):
 
 def rotate(img, deg):
     """rotate image while keeping its center and size"""
-    orig_rect = img.rect
+    orig_rect = img.get_rect()
     image = pygame.transform.rotate(img, deg)
     big_rect = image.get_rect(center=orig_rect.center)
+    return image
 
 
 async def read_tcp_msg(reader):
