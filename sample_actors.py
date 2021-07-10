@@ -1,7 +1,7 @@
 from pdb import set_trace
+from math import degrees, radians, cos, sin, pi
 import time
 import random
-from math import degrees, radians, cos, sin, sqrt, pi
 
 import pygame
 
@@ -39,7 +39,7 @@ class VectorActor(SpriteActor):
 class Robot(VectorActor):
     """Can take damage of bump() until hitpoints is down to zero.
     """
-    def __init__(self, velocity=20, angle_deg=90, *args, **kwargs):
+    def __init__(self, velocity=0, angle_deg=90, *args, **kwargs):
         super().__init__(velocity=velocity, angle_deg=angle_deg, *args, **kwargs)
         self.hitpoints = 1
         self.old_rect = self.rect  # enable step-back on bumping an object
@@ -63,8 +63,8 @@ class Robot(VectorActor):
 class BasicRobot(Robot):
     """A dumb robot that goes in circles
     """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, velocity=20, *args, **kwargs):
+        super().__init__(velocity=velocity, *args, **kwargs)
 
     def bump(self, damage=0):
         self.rect = self.old_rect
@@ -84,13 +84,17 @@ class BasicRobot(Robot):
 class Explosion(VectorActor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.time = 0.0
+        self.time = time.time()
+        self.last_rotate = 0.0
         self.physical = False
 
     def update(self):
         super().update()
-        self.time = self.time or time.time()   #init if zero
-        if time.time() >= self.time + 3.0:
+        now = time.time()
+        if not self.last_rotate or now - self.last_rotate > 0.1:
+            self.last_rotate = now
+            self.angle = random.random() * 2 * pi
+        if now - self.time >= + 3.0:
             self.die()
 
 
@@ -149,7 +153,7 @@ class HWall(Wall):
 class MinedropperRobot(Robot):
     def __init__(self, velocity=1, angle=radians(135), *args, **kwargs):
         super().__init__(velocity=velocity, angle=angle, *args, **kwargs)
-        self.hitpoints = 20
+        self.hitpoints = 5
         self.delta = 0.0
         self.deltaDirection = "up"
         self.nextMine = 0.0
@@ -167,7 +171,7 @@ class MinedropperRobot(Robot):
                 self.delta = radians(-15)
                 self.deltaDirection = "up"
         if self.nextMine <= time.time():
-            self.nextMine = time.time() + 5*random.random()
+            self.nextMine = time.time() + 5 * random.random()
             center = self.rect.center
             d = self.rect.h
             v = [center[0] - d * cos(self.angle),

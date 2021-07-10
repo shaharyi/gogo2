@@ -1,3 +1,4 @@
+from pdb import set_trace
 import random
 import pygame
 from pygame.locals import QUIT
@@ -5,12 +6,12 @@ from pygame.locals import QUIT
 from player_actor import PlayerActor
 from sample_actors import HWall, VWall, Spawner, Score
 from collide import collide, handle_collisions, check_boundaries
-
+from config import *
 
 def main():
     # Initialise screen
     pygame.init()
-    screen = pygame.display.set_mode((640, 480))
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption('Gogo2')
 
     # Fill background
@@ -19,12 +20,9 @@ def main():
     background.fill((0, 0, 0))
     background_orig = background.copy()  # in case static sprites change
 
-    # Initialise actors
-    score_loc = PlayerActor.nplayers == 1 and (0, 0) or (screen.get_width() - 50, 0)
-    score = Score(topleft=score_loc)
     dynamic_group = pygame.sprite.RenderPlain()
     # Initialise sprites
-    player1 = PlayerActor(topleft=screen.get_rect().center, score=score, groups=(dynamic_group,))
+    player1 = PlayerActor(topleft=screen.get_rect().center, groups=(dynamic_group,))
 
     static_group = pygame.sprite.RenderPlain()
     create_walls(static_group)
@@ -47,7 +45,8 @@ def main():
         for event in pygame.event.get():
             if event.type == QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                 return
-            player1.process_input(event)
+            elif event.type in [pygame.KEYDOWN, pygame.KEYUP]:
+                player1.process_input((event.type, event.key))
 
         for sp in dynamic_group.sprites():
             screen.blit(background, sp.rect, sp.rect)

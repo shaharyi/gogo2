@@ -16,10 +16,8 @@ from config import *
 
 class Server:
     def new_player(self):
-        score_loc = (self.screen_rect.h + 50 * PlayerActor.nplayers, 0)
-        score = Score(topleft=score_loc)
         # Initialise sprites
-        player = PlayerActor(topleft=self.screen_rect.center, score=score, groups=(self.dynamic_group,))
+        player = PlayerActor(topleft=self.screen_rect.center, groups=(self.dynamic_group,))
         self.players.append(player)
         return player
 
@@ -59,9 +57,14 @@ class Server:
         data = serialize_sprites(*groups)
         buf = pickle.dumps(('RENDER_DATA', data))
         # ip = MCAST and MCAST_GROUP or BCAST_IP
-        for addr in self.udp_peer_addr.items():
-            # print('sending %d to %s' % (len(buf), addr))
-            self.transport.sendto(buf, addr)
+        if BCAST:
+            self.transport.sendto(buf, (BCAST_IP, UDP_PORT))
+        elif MCAST:
+            self.transport.sendto(buf, (MCAST_GROUP, UDP_PORT))
+        else:  # unicast
+            for addr in self.udp_peer_addr.items():
+                # print('sending %d to %s' % (len(buf), addr))
+                self.transport.sendto(buf, addr)
 
     def process_tcp_msg(self, args, writer, player):
         opcode, payload = args[0], args[1:]
@@ -119,12 +122,15 @@ class Server:
 
     async def main(self):
         print("Starting TCP server")
-        tcp_server = await asyncio.start_server(self.tcp_socket_handler, SERVER_TCP_LOCAL_ADDR, TCP_PORT)
+        # default host is '0.0.0.0' = all interfaces
+        tcp_server = await asyncio.start_server(self.tcp_socket_handler, port=TCP_PORT)
 
-        addr = tcp_server.sockets[0].getsockname()
-        print(f'Serving on {addr}')
+        local_addr = tcp_server.sockets[0].getsockname()
+        print(f'Serving on {local_addr}')
 
-        print("Starting UDP server")
+        print(f'Starting UDP server in {MODE_NAME} mode')
+        hostname = socket.gethostname()
+        local_ip = socket.gethostbyname(hostname)
         # Get a reference to the event loop as we plan to use
         # low-level APIs.
         loop = asyncio.get_running_loop()
@@ -137,7 +143,7 @@ class Server:
         self.transport, protocol = await loop.create_datagram_endpoint(
             self.UDPServerProtocol, # sock=s)
             # allow_broadcast=True,
-            local_addr=(SERVER_UDP_LOCAL_ADDR, UDP_PORT))
+            local_addr=(local_ip, UDP_PORT))
 
         pygame.font.init()  # for Score
 

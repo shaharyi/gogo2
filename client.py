@@ -61,8 +61,8 @@ class UDPClientProtocol(DatagramProtocol):
             # (not strictly needed)
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             #
-            # Bind it to the port
-            s.bind(('', UDP_PORT))
+            # Bind it to the port (default/all interfaces)
+            s.bind(('0.0.0.0', UDP_PORT))
             #
             # Look up multicast group address in name server
             # (doesn't hurt if it is already in ddd.ddd.ddd.ddd format)
@@ -94,26 +94,28 @@ class UDPClientProtocol(DatagramProtocol):
 
 
 async def main():
-    host = len(sys.argv) > 1 and sys.argv[1] or '127.0.0.1'
+    server_ip = len(sys.argv) > 1 and sys.argv[1] or '127.0.0.1'
     # Get a reference to the event loop as we plan to use
     # low-level APIs.
     loop = asyncio.get_running_loop()
-    ip = MCAST and MCAST_GROUP or LOCAL_IP
     # s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     ## s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     # s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
     # s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     # s.bind(('192.168.1.255', 3001))
+    remote_ip = MCAST and MCAST_GROUP or UCAST and server_ip
+    remote_addr = (MCAST or UCAST) and (remote_ip, UDP_PORT) or None
+    local_addr = BCAST and (BCAST_IP, UDP_PORT) or None
+    print(f'local={local_addr}, remote={remote_addr}')
     udp_transport, udp_protocol = await loop.create_datagram_endpoint(
         UDPClientProtocol,  # sock=s)
-        local_addr=BCAST and (BCAST_IP, UDP_PORT) or None,
-        remote_addr=UCAST and (host, UDP_PORT) or None)
+        local_addr=local_addr,
+        remote_addr=remote_addr)
     udp_local_addr = udp_transport.get_extra_info('sockname')
     peer = udp_transport.get_extra_info('peername')
-    print(peer)
 
-    print('TCP connect')
-    reader, writer = await asyncio.open_connection(host, TCP_PORT)
+    print('TCP connect to ' + str(peer))
+    reader, writer = await asyncio.open_connection(server_ip, TCP_PORT)
     message = ('NEW_PLAYER', udp_local_addr)
     msg = util.prepare_msg(message)
     print(f'Send: {message!r}')
