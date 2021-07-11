@@ -1,12 +1,12 @@
 from pdb import set_trace
-import random
 import pygame
 from pygame.locals import QUIT
 
 from player_actor import PlayerActor
 from sample_actors import HWall, VWall, Spawner
-from collide import collide, handle_collisions, check_boundaries
+from collide import handle_collisions
 from config import *
+
 
 def main():
     # Initialise screen

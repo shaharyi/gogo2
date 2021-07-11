@@ -1,13 +1,11 @@
 from asyncio.protocols import DatagramProtocol
 import asyncio
 import socket
-import os, random
 import struct
 import pickle
 
 from pygame import Rect
 
-import util
 from player_actor import PlayerActor
 from actor import serialize_sprites
 from collide import *

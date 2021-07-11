@@ -1,4 +1,3 @@
-from enum import Enum
 
 TCP_PORT, UDP_PORT = 3000, 3001
 

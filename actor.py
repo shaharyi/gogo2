@@ -1,6 +1,5 @@
 from pdb import set_trace
 import os
-import pickle
 from pygame.sprite import Sprite
 import pygame
 

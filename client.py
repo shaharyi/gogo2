@@ -2,14 +2,12 @@ from pdb import set_trace
 from math import degrees, pi
 import sys
 import socket
-import string
 import struct
 from asyncio.protocols import DatagramProtocol
 import asyncio
 
 from pygame.locals import QUIT
 import pygame
-from pygame import Surface
 import pickle
 
 import util
