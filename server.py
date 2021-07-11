@@ -23,7 +23,7 @@ class Server:
 
     def initialise_actors(self):
         self.create_walls()
-        Spawner(center=self.screen_rect.center,
+        Spawner(topleft=(232, 232),  # center=self.screen_rect.center,
                 target_groups=(self.dynamic_group,),
                 groups=(self.spawner_group,))
 
@@ -75,10 +75,8 @@ class Server:
             msg = util.prepare_msg(('STATIC_SPRITES', sprites_data))
             writer.write(msg)
         if opcode == 'NEW_PLAYER':
-            if player is None:
-                player = self.new_player()
-            else:
-                util.log('Bug - a new player joins from same connection')
+            player and player.die()
+            player = self.new_player()
         elif opcode == 'INPUT':
             player.process_input(payload)
         else:
@@ -126,7 +124,7 @@ class Server:
         tcp_server = await asyncio.start_server(self.tcp_socket_handler, port=TCP_PORT)
 
         local_addr = tcp_server.sockets[0].getsockname()
-        print(f'Serving on {local_addr}')
+        print(f'Serving TCP on {local_addr}')
 
         print(f'Starting UDP server in {MODE_NAME} mode')
         hostname = socket.gethostname()
@@ -143,7 +141,8 @@ class Server:
         self.transport, protocol = await loop.create_datagram_endpoint(
             self.UDPServerProtocol, # sock=s)
             # allow_broadcast=True,
-            local_addr=(local_ip, UDP_PORT))
+            local_addr=('0.0.0.0', UDP_PORT))
+        print(f'Serving UDP on {local_ip, UDP_PORT}')
 
         pygame.font.init()  # for Score
 

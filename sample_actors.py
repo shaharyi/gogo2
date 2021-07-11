@@ -5,6 +5,7 @@ import random
 
 import pygame
 
+import util
 from actor import SpriteActor
 from config import *
 
@@ -23,17 +24,12 @@ class VectorActor(SpriteActor):
         (dx, dy) = (m * cos(a), m * sin(a))
         self.rect = self.rect.move(dx, -dy)
         if self.image_angle != self.angle:
-            self.rotate()
+            rot_deg = degrees(self.angle - self.orig_image_angle)
+            self.image = util.rotate(self.orig_image, rot_deg)
+            self.image_angle = self.angle
 
     def bump(self):
         pass
-
-    def rotate(self):
-        """rotate image while keeping its center"""
-        rot_deg = degrees(self.angle - self.orig_image_angle)
-        self.image = pygame.transform.rotate(self.orig_image, rot_deg)
-        self.rect = self.image.get_rect(center=self.rect.center)
-        self.image_angle = self.angle
 
 
 class Robot(VectorActor):
@@ -151,8 +147,8 @@ class HWall(Wall):
 
 
 class MinedropperRobot(Robot):
-    def __init__(self, velocity=1, angle=radians(135), *args, **kwargs):
-        super().__init__(velocity=velocity, angle=angle, *args, **kwargs)
+    def __init__(self, velocity=1, angle_deg=135, *args, **kwargs):
+        super().__init__(velocity=velocity, angle_deg=angle_deg, *args, **kwargs)
         self.hitpoints = 5
         self.delta = 0.0
         self.deltaDirection = "up"

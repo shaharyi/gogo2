@@ -4,7 +4,7 @@ import struct
 
 import pygame
 
-from config import DEBUG
+from config import *
 
 # logfile = open('/tmp/logs/%s.txt' % time.strftime('%Y%m%d_%H%M%S'), 'wt')
 logfile = open('/tmp/gogo2.log', 'at')
@@ -40,9 +40,16 @@ def prepare_msg(data):
 def rotate(img, deg):
     """rotate image while keeping its center and size"""
     r = img.get_rect()
-    image = pygame.transform.rotate(img, deg)
-    r2 = image.get_rect(center=r.center, w=r.w, h=r.h)
-    return image.subsurface(r2)
+    s = pygame.transform.rotate(img, deg)
+    r2 = s.get_rect()
+    topleft = (r2.w - r.w)/2, (r2.h - r.h)/2
+    new_surf = pygame.Surface(r.size)
+    if pygame.get_init():
+        new_surf.fill(img.get_colorkey())
+        new_surf.set_colorkey(img.get_colorkey())
+        new_surf = new_surf.convert()
+    new_surf.blit(s, (0, 0), area=pygame.Rect(topleft, r.size))
+    return new_surf
 
 
 async def read_tcp_msg(reader):

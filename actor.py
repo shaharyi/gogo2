@@ -1,9 +1,10 @@
+from pdb import set_trace
 import os
 import pickle
 from pygame.sprite import Sprite
 import pygame
 
-from config import IMAGE_EXT
+from config import *
 from util import log
 
 
@@ -17,8 +18,11 @@ class SpriteActor(Sprite):
         self.image = self.image_cache.get(self.filepath)
         if not self.image:
             log('* loading ' + self.filepath)
-            self.image = pygame.image.load(self.filepath)  # .convert()
+            self.image = pygame.image.load(self.filepath)
+            if pygame.get_init():
+                self.image = self.image.convert()
             self.image_cache[self.filepath] = self.image
+
         self.orig_image = self.image.copy()
         location = topleft and dict(topleft=topleft) or center and dict(center=center) or {}
         self.rect = self.image.get_rect(**location)

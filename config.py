@@ -7,8 +7,8 @@ DEBUG = True
 
 IMAGE_EXT = 'png'
 
-MODE_INDEX = 1
-MODE = 3*[False]
+MODE_INDEX = 0
+MODE = 3 * [False]
 MODE[MODE_INDEX] = True
 UCAST, BCAST, MCAST = MODE
 MODES = 'Unicast Broadcast Multicast'.split()
@@ -18,3 +18,5 @@ MCAST_GROUP = '225.0.0.250'
 BCAST_IP = '192.168.1.255'  # local Broadcast ip
 SERVER_TCP_LOCAL_ADDR = '0.0.0.0'  # all interfaces
 ORIG_ANGLE = 90
+
+

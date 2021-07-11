@@ -1,4 +1,5 @@
 from pdb import set_trace
+from math import degrees, pi
 import sys
 import socket
 import string
@@ -17,6 +18,7 @@ from config import *
 images = {}   # filepath -> Surface
 surfaces = []
 
+ORIG_ANGLE_RAD = ORIG_ANGLE * pi/180
 
 def process_render_data(data):
     surf_list = []
@@ -27,8 +29,9 @@ def process_render_data(data):
         rect = props['rect']
         img = images.get(fp)
         img = img or pygame.image.load(props['filepath']).convert()
-        if angle and angle != ORIG_ANGLE:
-            img = util.rotate(img, angle - ORIG_ANGLE)
+        diff = angle and angle - ORIG_ANGLE_RAD
+        if diff:
+            img = util.rotate(img, degrees(diff))
         surf_list.append((img, rect.topleft))
     return surf_list
 
@@ -95,6 +98,8 @@ class UDPClientProtocol(DatagramProtocol):
 
 async def main():
     server_ip = len(sys.argv) > 1 and sys.argv[1] or '127.0.0.1'
+    print('Connect to ' + server_ip)
+
     # Get a reference to the event loop as we plan to use
     # low-level APIs.
     loop = asyncio.get_running_loop()
@@ -118,7 +123,7 @@ async def main():
     reader, writer = await asyncio.open_connection(server_ip, TCP_PORT)
     message = ('NEW_PLAYER', udp_local_addr)
     msg = util.prepare_msg(message)
-    print(f'Send: {message!r}')
+    print(f'Send: {message!r} to {udp_local_addr}')
     writer.write(msg)
     # if reached high watermark, drain down to lower watermark
     await writer.drain()
@@ -165,7 +170,7 @@ async def main():
             if event.type == QUIT or (event.type==pygame.KEYDOWN and event.key==pygame.K_ESCAPE):
                 done = True
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
-                msg = util.prepare_msg(('NEW_PLAYER', None))
+                msg = util.prepare_msg(('NEW_PLAYER', udp_local_addr))
                 writer.write(msg)
             elif event.type in [pygame.KEYDOWN, pygame.KEYUP]:
                 msg = util.prepare_msg(('INPUT', event.type, event.key))
