@@ -45,6 +45,8 @@ def main():
         for event in pygame.event.get():
             if event.type == QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
                 return
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+                player1 = PlayerActor(topleft=screen.get_rect().center, groups=(dynamic_group,))
             elif event.type in [pygame.KEYDOWN, pygame.KEYUP]:
                 player1.process_input((event.type, event.key))
 
