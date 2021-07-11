@@ -87,11 +87,9 @@ class PlayerActor(Robot):
         self.angle_d = -ANGLE_DELTA
 
     def left(self):
-        print('LEFT')
         self.angle_d = +ANGLE_DELTA
 
     def center(self):
-        print('CENTER')
         self.angle_d = 0
 
     def update(self):

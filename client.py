@@ -20,6 +20,7 @@ surfaces = []
 
 ORIG_ANGLE_RAD = ORIG_ANGLE * pi/180
 
+
 def process_render_data(data):
     surf_list = []
     for render_props in data:
@@ -37,11 +38,13 @@ def process_render_data(data):
 
 
 def process_udp_msg(msg):
-    op, pay = msg
+    op, prop_surfaces, raw_surfaces = msg[0], msg[1], msg[2]
     global surfaces
     surfaces = []
     if op == 'RENDER_DATA':
-        surfaces = process_render_data(pay)
+        surfaces = process_render_data(prop_surfaces)
+        more = [(pygame.image.frombuffer(s[0], s[1][2:4], 'RGBA'), s[1][0:2]) for s in raw_surfaces]
+        surfaces += more
     else:
         util.log('Unknown msg: %s' % op)
 

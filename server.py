@@ -52,11 +52,8 @@ class Server:
         HWall((76, 192), g)
         HWall((76, 328), g)
 
-    def broadcast(self):
-        groups = (self.dynamic_group, self.spawner_group)
-        data = serialize_sprites(*groups)
-        buf = pickle.dumps(('RENDER_DATA', data))
-        # ip = MCAST and MCAST_GROUP or BCAST_IP
+    def transmit(self, msg):
+        buf = pickle.dumps(msg)
         if BCAST:
             self.transport.sendto(buf, (BCAST_IP, UDP_PORT))
         elif MCAST:
@@ -65,6 +62,23 @@ class Server:
             for addr in self.udp_peer_addr.items():
                 # print('sending %d to %s' % (len(buf), addr))
                 self.transport.sendto(buf, addr)
+
+    def pack_groups(self):
+        groups = (self.dynamic_group, self.spawner_group)
+        return serialize_sprites(*groups)
+
+    def pack_surfaces(self):
+        surfaces = []
+        for p in self.players:
+            sprit = p.score
+            surfaces.append((pygame.image.tostring(sprit.image, 'RGBA'), sprit.rect))
+        return tuple(surfaces)
+
+    def pack_and_transmit(self):
+        gr = self.pack_groups()
+        sf = self.pack_surfaces()
+        msg = ('RENDER_DATA', gr, sf)
+        self.transmit(msg)
 
     def process_tcp_msg(self, args, writer, player):
         opcode, payload = args[0], args[1:]
@@ -152,7 +166,7 @@ class Server:
             while True:
                 # Make sure game doesn't run at more than X frames per second
                 clock.tick(30)
-                self.broadcast()
+                self.pack_and_transmit()
                 # Yield to asyncio event-loop
                 await asyncio.sleep(0)
                 self.spawner_group.update()

@@ -4,7 +4,7 @@ import pygame
 from pygame.locals import QUIT
 
 from player_actor import PlayerActor
-from sample_actors import HWall, VWall, Spawner, Score
+from sample_actors import HWall, VWall, Spawner
 from collide import collide, handle_collisions, check_boundaries
 from config import *
 
