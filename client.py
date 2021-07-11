@@ -66,7 +66,7 @@ class UDPClientProtocol(DatagramProtocol):
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             #
             # Bind it to the port (default/all interfaces)
-            s.bind(('0.0.0.0', UDP_PORT))
+            s.bind((LOCAL_IP, UDP_PORT))
             #
             # Look up multicast group address in name server
             # (doesn't hurt if it is already in ddd.ddd.ddd.ddd format)
@@ -98,7 +98,18 @@ class UDPClientProtocol(DatagramProtocol):
 
 
 async def main():
-    server_ip = len(sys.argv) > 1 and sys.argv[1] or '127.0.0.1'
+    # Initialise screen
+    pygame.init()
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    pygame.display.set_caption('Gogo2')
+
+    # Fill background
+    background = pygame.Surface(screen.get_size())
+    background = background.convert()
+    background.fill((0, 0, 0))
+    background_orig = background.copy()  # in case static sprites change
+
+    server_ip = len(sys.argv) > 1 and sys.argv[1] or LOCAL_IP
     print('Connect to ' + server_ip)
 
     # Get a reference to the event loop as we plan to use
@@ -118,13 +129,17 @@ async def main():
         local_addr=local_addr,
         remote_addr=remote_addr)
     udp_local_addr = udp_transport.get_extra_info('sockname')
-    peer = udp_transport.get_extra_info('peername')
+    # peername = udp_transport.get_extra_info('peername')
+    print(f'udp_local_addr ={udp_local_addr}')
+    # print(f'peername = {peername}')
 
-    print('TCP connect to ' + str(peer))
+    print('TCP connect to ' + str(server_ip))
     reader, writer = await asyncio.open_connection(server_ip, TCP_PORT)
+    tcp_local_addr = writer.get_extra_info('sockname')
+    peer = writer.get_extra_info('peername')
     message = ('NEW_PLAYER', udp_local_addr)
     msg = util.prepare_msg(message)
-    print(f'Send: {message!r} to {udp_local_addr}')
+    print(f'Send: {message!r} to {peer}')
     writer.write(msg)
     # if reached high watermark, drain down to lower watermark
     await writer.drain()
@@ -136,17 +151,6 @@ async def main():
         static_sprites = payload
     else:
         util.log('Unknown msg: ' + opcode)
-
-    # Initialise screen
-    pygame.init()
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    pygame.display.set_caption('Gogo2')
-
-    # Fill background
-    background = pygame.Surface(screen.get_size())
-    background = background.convert()
-    background.fill((0, 0, 0))
-    background_orig = background.copy()  # in case static sprites change
 
     surf_list = process_render_data(static_sprites)
     for surf, pos in surf_list:

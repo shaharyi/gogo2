@@ -13,6 +13,16 @@ from config import *
 
 
 class Server:
+    def __init__(self):
+        self.players = []
+        self.udp_peer_addr = {}
+        self.screen_rect = Rect(0, 0, WIDTH, HEIGHT)
+        self.dynamic_group = pygame.sprite.RenderPlain()
+        self.static_group = pygame.sprite.RenderPlain()
+        self.spawner_group = pygame.sprite.RenderPlain()
+        self.initialise_actors()
+        self.transport = None
+
     def new_player(self):
         # Initialise sprites
         player = PlayerActor(topleft=self.screen_rect.center, groups=(self.dynamic_group,))
@@ -24,16 +34,6 @@ class Server:
         Spawner(topleft=(232, 232),  # center=self.screen_rect.center,
                 target_groups=(self.dynamic_group,),
                 groups=(self.spawner_group,))
-
-    def __init__(self):
-        self.players = []
-        self.udp_peer_addr = {}
-        self.screen_rect = Rect(0, 0, WIDTH, HEIGHT)
-        self.dynamic_group = pygame.sprite.RenderPlain()
-        self.static_group = pygame.sprite.RenderPlain()
-        self.spawner_group = pygame.sprite.RenderPlain()
-        self.initialise_actors()
-        self.transport = None
 
     def create_walls(self):
         g = (self.static_group, )
@@ -82,7 +82,8 @@ class Server:
         opcode, payload = args[0], args[1:]
         if opcode in ('JOIN', 'NEW_PLAYER'):
             ip, port = payload[0]
-            self.udp_peer_addr[ip] = port
+            if UCAST:
+                self.udp_peer_addr[ip] = port
             sprites_data = serialize_sprites(self.static_group)
             msg = util.prepare_msg(('STATIC_SPRITES', sprites_data))
             writer.write(msg)
@@ -106,7 +107,8 @@ class Server:
                 player = self.process_tcp_msg(msg, writer, player)
             else:
                 done = True
-        self.udp_peer_addr.pop(addr[0])
+        if UCAST:
+            self.udp_peer_addr.pop(addr[0])
         writer.close()
         await writer.wait_closed()
 
@@ -139,8 +141,6 @@ class Server:
         print(f'Serving TCP on {local_addr}')
 
         print(f'Starting UDP server in {MODE_NAME} mode')
-        hostname = socket.gethostname()
-        local_ip = socket.gethostbyname(hostname)
         # Get a reference to the event loop as we plan to use
         # low-level APIs.
         loop = asyncio.get_running_loop()
@@ -152,9 +152,10 @@ class Server:
         # s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         self.transport, protocol = await loop.create_datagram_endpoint(
             self.UDPServerProtocol, # sock=s)
-            # allow_broadcast=True,
-            local_addr=('0.0.0.0', UDP_PORT))
-        print(f'Serving UDP on {local_ip, UDP_PORT}')
+            allow_broadcast=BCAST,
+            local_addr=(LOCAL_IP, UDP_PORT))
+        local_addr = self.transport.get_extra_info("sockname")
+        print(f'Serving UDP on {local_addr}')
 
         pygame.font.init()  # for Score
 
