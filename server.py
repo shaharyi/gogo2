@@ -142,14 +142,15 @@ class Server:
         loop = asyncio.get_running_loop()
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         if BCAST:
+            ## Considered unsafe
             ## sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            # Not all linux systems support this
             # sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-            sock.bind((LOCAL_IP, UDP_PORT))
         elif MCAST:
             ttl = struct.pack('b', 1)  # Time-to-live
             sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
-        else:  # UCAST
+        if BCAST or UCAST:
             sock.bind((LOCAL_IP, UDP_PORT))
         self.transport, protocol = await loop.create_datagram_endpoint(
             self.UDPServerProtocol, sock=sock)
