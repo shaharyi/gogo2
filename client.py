@@ -19,40 +19,6 @@ surfaces = []
 ORIG_ANGLE_RAD = ORIG_ANGLE * pi/180
 
 
-# Open a UDP socket, bind it to a port and select a multicast group
-def openmcastsock(group, port):
-    # Import modules used only here
-    import string
-    import struct
-    #
-    # Create a socket
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    #
-    # Allow multiple copies of this program on one machine
-    # (not strictly needed)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    #
-    # Bind it to the port
-    s.bind(('', port))
-    #
-    # Look up multicast group address in name server
-    # (doesn't hurt if it is already in ddd.ddd.ddd.ddd format)
-    group = socket.gethostbyname(group)
-    #
-    # Construct binary group address
-    bytes = map(int, string.split(group, "."))
-    grpaddr = 0
-    for byte in bytes: grpaddr = (grpaddr << 8) | byte
-    #
-    # Construct struct mreq from grpaddr and ifaddr
-    ifaddr = socket.INADDR_ANY
-    mreq = struct.pack('ll', socket.htonl(grpaddr), socket.htonl(ifaddr))
-    #
-    # Add group membership
-    s.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
-    #
-    return s
-
 def process_render_data(data):
     surf_list = []
     for render_props in data:
