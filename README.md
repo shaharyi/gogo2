@@ -6,7 +6,7 @@
 * `python main.py`
 
 ### Run in client/server Mode
-* Review `config.py` and set `mode_index`:  
+* Review `config.py` and set `MODE_INDEX`:  
 0 - Unicast, 1 - Broadcast, 2 - Multicast
 
 * `python server.py`
