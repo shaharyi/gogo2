@@ -19,6 +19,40 @@ surfaces = []
 ORIG_ANGLE_RAD = ORIG_ANGLE * pi/180
 
 
+# Open a UDP socket, bind it to a port and select a multicast group
+def openmcastsock(group, port):
+    # Import modules used only here
+    import string
+    import struct
+    #
+    # Create a socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    #
+    # Allow multiple copies of this program on one machine
+    # (not strictly needed)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    #
+    # Bind it to the port
+    s.bind(('', port))
+    #
+    # Look up multicast group address in name server
+    # (doesn't hurt if it is already in ddd.ddd.ddd.ddd format)
+    group = socket.gethostbyname(group)
+    #
+    # Construct binary group address
+    bytes = map(int, string.split(group, "."))
+    grpaddr = 0
+    for byte in bytes: grpaddr = (grpaddr << 8) | byte
+    #
+    # Construct struct mreq from grpaddr and ifaddr
+    ifaddr = socket.INADDR_ANY
+    mreq = struct.pack('ll', socket.htonl(grpaddr), socket.htonl(ifaddr))
+    #
+    # Add group membership
+    s.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+    #
+    return s
+
 def process_render_data(data):
     surf_list = []
     for render_props in data:
@@ -58,32 +92,6 @@ class UDPClientProtocol(DatagramProtocol):
         # message = 'hello'
         # print('Send:', message)
         # self.transport.sendto(message.encode())
-        if MCAST:
-            s = transport.get_extra_info("socket")
-            #
-            # Allow multiple copies of this program on one machine
-            # (not strictly needed)
-            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            #
-            # Bind it to the port (default/all interfaces)
-            s.bind((LOCAL_IP, UDP_PORT))
-            #
-            # Look up multicast group address in name server
-            # (doesn't hurt if it is already in ddd.ddd.ddd.ddd format)
-            group = socket.gethostbyname(MCAST_GROUP)
-            #
-            # Construct binary group address
-            bytes = map(int, group.split("."))
-            grpaddr = 0
-            for byte in bytes: grpaddr = (grpaddr << 8) | byte
-            #
-            # Construct struct mreq from grpaddr and ifaddr
-            ifaddr = socket.INADDR_ANY
-            mreq = struct.pack('ll', socket.htonl(grpaddr), socket.htonl(ifaddr))
-            #
-            # Add group membership
-            s.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
-            #
 
     def datagram_received(self, data, addr):
         # print("Received %d", len(data))
@@ -115,22 +123,34 @@ async def main():
     # Get a reference to the event loop as we plan to use
     # low-level APIs.
     loop = asyncio.get_running_loop()
-    # s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    ## s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    # s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
-    # s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    # s.bind(('192.168.1.255', 3001))
     remote_ip = MCAST and MCAST_GROUP or UCAST and server_ip
-    remote_addr = (MCAST or UCAST) and (remote_ip, UDP_PORT) or None
-    local_addr = BCAST and (BCAST_IP, UDP_PORT) or None
+    remote_addr = UCAST and (remote_ip, UDP_PORT) or None
+    local_addr = BCAST and (BCAST_IP, UDP_PORT) or MCAST and ('', UDP_PORT) or None
     print(f'local={local_addr}, remote={remote_addr}')
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    ## s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    if BCAST:
+        # sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    if local_addr:
+        sock.bind(local_addr)
+    if MCAST:
+        # Tell the operating system to add the socket to
+        # the multicast group on all interfaces.
+        group = socket.inet_aton(MCAST_GROUP)
+        mreq = struct.pack('4sL', group, socket.INADDR_ANY)
+        sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+    if remote_addr:
+        sock.connect(remote_addr)
+
     udp_transport, udp_protocol = await loop.create_datagram_endpoint(
-        UDPClientProtocol,  # sock=s)
-        local_addr=local_addr,
-        remote_addr=remote_addr)
+        UDPClientProtocol, sock=sock)
+        # local_addr=local_addr,
+        # remote_addr=remote_addr)
     udp_local_addr = udp_transport.get_extra_info('sockname')
-    # peername = udp_transport.get_extra_info('peername')
     print(f'udp_local_addr ={udp_local_addr}')
+    # peername = udp_transport.get_extra_info('peername')
     # print(f'peername = {peername}')
 
     print('TCP connect to ' + str(server_ip))

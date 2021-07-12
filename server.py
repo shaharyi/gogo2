@@ -56,6 +56,7 @@ class Server:
             self.transport.sendto(buf, (BCAST_IP, UDP_PORT))
         elif MCAST:
             self.transport.sendto(buf, (MCAST_GROUP, UDP_PORT))
+            # print('sending %d' % len(buf))
         else:  # unicast
             for addr in self.udp_peer_addr.items():
                 # print('sending %d to %s' % (len(buf), addr))
@@ -122,11 +123,6 @@ class Server:
             print('UDP connection made')
             # sock = transport.get_extra_info("socket")
             # sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            if MCAST:
-                sock = transport.get_extra_info("socket")
-                sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 0)
-                ttl = struct.pack('b', 1)  # Time-to-live
-                sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
 
         def datagram_received(self, data, addr):
             # message = data.decode()
@@ -144,16 +140,21 @@ class Server:
         # Get a reference to the event loop as we plan to use
         # low-level APIs.
         loop = asyncio.get_running_loop()
-        # One protocol instance will be created to serve all
-        # client requests.
-        # s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-        ## s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        # s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
-        # s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        if BCAST:
+            ## sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            # sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            sock.bind((LOCAL_IP, UDP_PORT))
+        elif MCAST:
+            ttl = struct.pack('b', 1)  # Time-to-live
+            sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
+        else:  # UCAST
+            sock.bind((LOCAL_IP, UDP_PORT))
         self.transport, protocol = await loop.create_datagram_endpoint(
-            self.UDPServerProtocol, # sock=s)
-            allow_broadcast=BCAST,
-            local_addr=(LOCAL_IP, UDP_PORT))
+            self.UDPServerProtocol, sock=sock)
+            # allow_broadcast=BCAST,
+            # local_addr=(LOCAL_IP, UDP_PORT))
         local_addr = self.transport.get_extra_info("sockname")
         print(f'Serving UDP on {local_addr}')
 

@@ -6,7 +6,7 @@ DEBUG = True
 
 IMAGE_EXT = 'png'
 
-MODE_INDEX = 0
+MODE_INDEX = 1
 MODE = 3 * [False]
 MODE[MODE_INDEX] = True
 UCAST, BCAST, MCAST = MODE
