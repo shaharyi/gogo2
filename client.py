@@ -28,7 +28,7 @@ def process_render_data(data):
         rect = props['rect']
         img = images.get(fp)
         img = img or pygame.image.load(props['filepath']).convert()
-        diff = angle and angle - ORIG_ANGLE_RAD
+        diff = angle and angle - props['orig_image_angle']
         if diff:
             img = util.rotate(img, degrees(diff))
         surf_list.append((img, rect.topleft))

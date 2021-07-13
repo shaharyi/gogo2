@@ -89,7 +89,9 @@ class Server:
             msg = util.prepare_msg(('STATIC_SPRITES', sprites_data))
             writer.write(msg)
         if opcode == 'NEW_PLAYER':
-            player and player.die()
+            if player:
+                player.die()
+                self.players.remove(player)
             player = self.new_player(num)
         elif opcode == 'INPUT':
             player.process_input(payload)

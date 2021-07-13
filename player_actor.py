@@ -37,19 +37,17 @@ class PlayerActor(Robot):
     nplayers = 0
     MAX_VELOCITY = 10
 
-    def __init__(self, topleft, angle_deg=0, local=True, groups=(), num=nplayers, *args, **kwargs):
+    def __init__(self, topleft, image_angle_deg=0, angle=pi/2, local=True, groups=(), num=nplayers, *args, **kwargs):
         # location = location or (PlayerActor.nplayers%2 and 50  or World._singleton.width-50, 250)
         self.num = num
         self.__class__.nplayers += 1
         image_file = 'player' + str(num + 1)
-        super().__init__(topleft=topleft, image_file=image_file, groups=groups, angle_deg=angle_deg, *args, **kwargs)
-        self.angle = pi/2
+        super().__init__(topleft=topleft, image_file=image_file, groups=groups, angle=angle, *args, **kwargs)
         score_loc = (50, 50 * (num + 1))
         self.score = Score(topleft=score_loc, groups=groups)
         self.angle_d = 0
         self.hitpoints = 20
         self.thrust = 0
-        self.update()
         index = num if local else 0
         kmap_down = {k: getattr(self, v) for k, v in mappings[KEYDOWN][index].items()}
         kmap_up = {k: getattr(self, v) for k, v in mappings[KEYUP][index].items()}

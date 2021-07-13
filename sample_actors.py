@@ -11,22 +11,26 @@ from config import *
 
 
 class VectorActor(SpriteActor):
-    def __init__(self, angle_deg=ORIG_ANGLE, angle=None, velocity=0, groups=(), *args, **kwargs):
+    def __init__(self, image_angle_deg=0, angle=0, velocity=0, groups=(), *args, **kwargs):
         super().__init__(groups=groups, *args, **kwargs)
-        self.angle = angle or radians(angle_deg)
-        self.image_angle = self.angle
-        self.orig_image_angle = self.angle
+        self.angle = angle
+        self.orig_image_angle = radians(image_angle_deg)
+        self.image_angle = self.orig_image_angle
         self.velocity = velocity
-        self.render_props += ['angle']
+        self.render_props += ['angle', 'orig_image_angle']
+        self.rotate()
+
+    def rotate(self):
+        if self.image_angle != self.angle:
+            rot_deg = degrees(self.angle - self.orig_image_angle)
+            self.image = util.rotate(self.orig_image, rot_deg)
+            self.image_angle = self.angle
 
     def update(self):
         (a, m) = self.angle, self.velocity
         (dx, dy) = (m * cos(a), m * sin(a))
         self.rect = self.rect.move(dx, -dy)
-        if self.image_angle != self.angle:
-            rot_deg = degrees(self.angle - self.orig_image_angle)
-            self.image = util.rotate(self.orig_image, rot_deg)
-            self.image_angle = self.angle
+        self.rotate()
 
     def bump(self):
         pass
@@ -35,8 +39,8 @@ class VectorActor(SpriteActor):
 class Robot(VectorActor):
     """Can take damage of bump() until hitpoints is down to zero.
     """
-    def __init__(self, velocity=0, *args, **kwargs):
-        super().__init__(velocity=velocity, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.hitpoints = 1
         self.old_rect = self.rect  # enable step-back on bumping an object
 
@@ -49,7 +53,8 @@ class Robot(VectorActor):
     def bump(self, damage=0):
         self.rect = self.old_rect
         self.velocity = 0
-        if damage: self.take_damage(damage)
+        if damage:
+            self.take_damage(damage)
 
     def update(self):
         self.old_rect = self.rect
@@ -59,8 +64,8 @@ class Robot(VectorActor):
 class BasicRobot(Robot):
     """A dumb robot that goes in circles
     """
-    def __init__(self, velocity=20, *args, **kwargs):
-        super().__init__(velocity=velocity, *args, **kwargs)
+    def __init__(self, velocity=20, image_angle_deg=ORIG_ANGLE, *args, **kwargs):
+        super().__init__(velocity=velocity, image_angle_deg=image_angle_deg, *args, **kwargs)
 
     def bump(self, damage=0):
         self.rect = self.old_rect
@@ -147,8 +152,8 @@ class HWall(Wall):
 
 
 class MinedropperRobot(Robot):
-    def __init__(self, velocity=1, angle_deg=135, *args, **kwargs):
-        super().__init__(velocity=velocity, angle_deg=angle_deg, *args, **kwargs)
+    def __init__(self, velocity=1, image_angle_deg=ORIG_ANGLE, *args, **kwargs):
+        super().__init__(velocity=velocity, image_angle_deg=image_angle_deg, *args, **kwargs)
         self.hitpoints = 5
         self.delta = 0.0
         self.deltaDirection = "up"
@@ -199,7 +204,7 @@ class Spawner(SpriteActor):
             self.time = time.time() + 0.5 # wait 1/2 second on start
         elif time.time() >= self.time: # every five seconds
             self.time = time.time() + 5.0
-            angle = random.random() * 4*pi;
+            angle = random.random() * 2 * pi;
             velocity = random.random() * 10.0 + 1
             newRobot = random.choice(self.robots)
             newRobot(groups=self.target_groups, center=self.rect.center, angle=angle, velocity=velocity)
