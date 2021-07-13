@@ -23,9 +23,9 @@ class Server:
         self.initialise_actors()
         self.transport = None
 
-    def new_player(self):
+    def new_player(self, num):
         # Initialise sprites
-        player = PlayerActor(topleft=self.screen_rect.center, local=False, groups=(self.dynamic_group,))
+        player = PlayerActor(topleft=self.screen_rect.center, local=False, groups=(self.dynamic_group,), num=num)
         self.players.append(player)
         return player
 
@@ -79,7 +79,7 @@ class Server:
         msg = ('RENDER_DATA', gr, sf)
         self.transmit(msg)
 
-    def process_tcp_msg(self, args, writer, player):
+    def process_tcp_msg(self, args, writer, player, num):
         opcode, payload = args[0], args[1:]
         if opcode in ('JOIN', 'NEW_PLAYER'):
             ip, port = payload[0]
@@ -90,7 +90,7 @@ class Server:
             writer.write(msg)
         if opcode == 'NEW_PLAYER':
             player and player.die()
-            player = self.new_player()
+            player = self.new_player(num)
         elif opcode == 'INPUT':
             player.process_input(payload)
         else:
@@ -98,6 +98,7 @@ class Server:
         return player
 
     async def tcp_socket_handler(self, reader, writer):
+        num = PlayerActor.nplayers
         addr = writer.get_extra_info('peername')
         done = False
         player = None
@@ -105,7 +106,7 @@ class Server:
             r, msg = await util.read_tcp_msg(reader)
             print("server got (%d) from %s: %s " % (r, addr, str(msg)))
             if r > 0:
-                player = self.process_tcp_msg(msg, writer, player)
+                player = self.process_tcp_msg(msg, writer, player, num)
             else:
                 done = True
         if UCAST:

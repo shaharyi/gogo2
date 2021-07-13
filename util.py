@@ -1,4 +1,5 @@
 from pdb import set_trace
+import os
 import pickle
 import struct
 
@@ -45,7 +46,7 @@ def rotate(img, deg):
     topleft = (r2.w - r.w)/2, (r2.h - r.h)/2
     new_surf = pygame.Surface(r.size)
     if pygame.get_init():
-        new_surf.fill(img.get_colorkey())
+        new_surf.fill(img.get_colorkey() or img.get_at((0, 0)))
         new_surf.set_colorkey(img.get_colorkey())
         new_surf = new_surf.convert()
     new_surf.blit(s, (0, 0), area=pygame.Rect(topleft, r.size))

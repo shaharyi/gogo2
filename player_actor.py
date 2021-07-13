@@ -3,7 +3,10 @@ from math import sin, cos, pi
 
 from pygame import K_RIGHT, K_LEFT, K_DOWN, K_UP, K_SPACE, K_m, KEYDOWN, KEYUP
 
+import util
 from util import sign
+from sprite_sheet import *
+
 from sample_actors import Robot, Mine, Bullet, Score, MinedropperRobot, BasicRobot
 
 THRUST = 1.5
@@ -34,18 +37,18 @@ class PlayerActor(Robot):
     nplayers = 0
     MAX_VELOCITY = 10
 
-    def __init__(self, topleft, local=True, groups=()):
+    def __init__(self, topleft, local=True, groups=(), num=nplayers, *args, **kwargs):
         # location = location or (PlayerActor.nplayers%2 and 50  or World._singleton.width-50, 250)
+        self.num = num
         self.__class__.nplayers += 1
-        image_file = self.__class__.__name__ + str(self.__class__.nplayers)
-        super().__init__(topleft=topleft, image_file=image_file, groups=groups)
-        score_loc = (50, 50 * self.nplayers)
-        set_trace()
+        image_file = 'player' + str(num + 1)
+        super().__init__(topleft=topleft, image_file=image_file, groups=groups, *args, **kwargs)
+        score_loc = (50, 50 * (num + 1))
         self.score = Score(topleft=score_loc, groups=groups)
         self.angle_d = 0
         self.hitpoints = 20
         self.thrust = 0
-        index = self.__class__.nplayers - 1 if local else 0
+        index = num if local else 0
         kmap_down = {k: getattr(self, v) for k, v in mappings[KEYDOWN][index].items()}
         kmap_up = {k: getattr(self, v) for k, v in mappings[KEYUP][index].items()}
         self.kmap = {KEYDOWN: kmap_down, KEYUP: kmap_up}
