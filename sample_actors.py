@@ -35,8 +35,8 @@ class VectorActor(SpriteActor):
 class Robot(VectorActor):
     """Can take damage of bump() until hitpoints is down to zero.
     """
-    def __init__(self, velocity=0, angle_deg=90, *args, **kwargs):
-        super().__init__(velocity=velocity, angle_deg=angle_deg, *args, **kwargs)
+    def __init__(self, velocity=0, *args, **kwargs):
+        super().__init__(velocity=velocity, *args, **kwargs)
         self.hitpoints = 1
         self.old_rect = self.rect  # enable step-back on bumping an object
 
