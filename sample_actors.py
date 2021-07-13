@@ -7,7 +7,7 @@ import pygame
 
 import util
 from actor import SpriteActor
-from config import *
+from config_template import *
 
 
 class VectorActor(SpriteActor):

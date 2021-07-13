@@ -5,7 +5,7 @@ import struct
 
 import pygame
 
-from config import *
+from config_template import *
 
 # logfile = open('/tmp/logs/%s.txt' % time.strftime('%Y%m%d_%H%M%S'), 'wt')
 logfile = open('/tmp/gogo2.log', 'at')

@@ -9,7 +9,7 @@ from pygame import Rect
 from player_actor import PlayerActor
 from actor import serialize_sprites
 from collide import *
-from config import *
+from config_template import *
 
 
 class Server:

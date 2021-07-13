@@ -3,7 +3,7 @@ import os
 from pygame.sprite import Sprite
 import pygame
 
-from config import *
+from config_template import *
 from util import log
 
 
