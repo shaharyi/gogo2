@@ -34,19 +34,25 @@ class PlayerActor(Robot):
     nplayers = 0
     MAX_VELOCITY = 10
 
-    def __init__(self, topleft, groups=()):
+    def __init__(self, topleft, local=True, groups=()):
         # location = location or (PlayerActor.nplayers%2 and 50  or World._singleton.width-50, 250)
-        self.nplayers += 1
-        image_file = self.__class__.__name__ + str(self.nplayers)
+        self.__class__.nplayers += 1
+        image_file = self.__class__.__name__ + str(self.__class__.nplayers)
         super().__init__(topleft=topleft, image_file=image_file, groups=groups)
         score_loc = (50, 50 * self.nplayers)
+        set_trace()
         self.score = Score(topleft=score_loc, groups=groups)
         self.angle_d = 0
         self.hitpoints = 20
         self.thrust = 0
-        kmap_down = {k: getattr(self, v) for k, v in mappings[KEYDOWN][self.nplayers-1].items()}
-        kmap_up = {k: getattr(self, v) for k, v in mappings[KEYUP][self.nplayers-1].items()}
+        index = self.__class__.nplayers - 1 if local else 0
+        kmap_down = {k: getattr(self, v) for k, v in mappings[KEYDOWN][index].items()}
+        kmap_up = {k: getattr(self, v) for k, v in mappings[KEYUP][index].items()}
         self.kmap = {KEYDOWN: kmap_down, KEYUP: kmap_up}
+
+    def die(self):
+        super().die()
+        self.__class__.nplayers -= 1
 
     def process_input(self, event_data):
         event_type, event_key = event_data

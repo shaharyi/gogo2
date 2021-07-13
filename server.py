@@ -25,7 +25,7 @@ class Server:
 
     def new_player(self):
         # Initialise sprites
-        player = PlayerActor(topleft=self.screen_rect.center, groups=(self.dynamic_group,))
+        player = PlayerActor(topleft=self.screen_rect.center, local=False, groups=(self.dynamic_group,))
         self.players.append(player)
         return player
 
