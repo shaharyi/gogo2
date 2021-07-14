@@ -51,6 +51,8 @@ class Robot(VectorActor):
         if self.hitpoints <= 0:
             Explosion(center=self.rect.center, angle=self.angle, groups=self.groups())
             self.die()
+        if damage:
+            self.append_sound('hit')
 
     def bump(self, damage=0):
         self.rect = self.old_rect
@@ -90,6 +92,7 @@ class Explosion(VectorActor):
         self.time = time.time()
         self.last_rotate = 0.0
         self.physical = False
+        self.append_sound('boom')
 
     def update(self):
         super().update()
@@ -137,8 +140,10 @@ class Bullet(VectorActor):
     def bounce(self, wall):
         if isinstance(wall, VWall):
             self.angle = pi - self.angle
+            self.append_sound('bounce')
         elif isinstance(wall, HWall):
             self.angle = -self.angle
+            self.append_sound('bounce')
 
     def bump(self, damage=0):  # hit a mine or a wall
         self.die()

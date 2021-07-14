@@ -1,6 +1,7 @@
 from multimethod import multimethod
 
 from sample_actors import *
+from player_actor import PlayerActor
 
 
 def check_boundaries(_actor, rect):
@@ -64,14 +65,26 @@ def collide(_wall: Wall, _bullet: Bullet):
 
 
 @multimethod
-def collide(_actor:Robot, _mine: Mine):
+def collide(_actor: BasicRobot, _mine: Mine):
     _actor.bump(damage=25)
     _mine.die()
     return 1
 
 
 @multimethod
-def collide(_mine: Mine, _actor:Robot):
+def collide(_mine: Mine, _actor:BasicRobot):
+    return collide(_actor, _mine)
+
+
+@multimethod
+def collide(_actor: PlayerActor, _mine: Mine):
+    _actor.bump(damage=5)
+    _mine.die()
+    return 1
+
+
+@multimethod
+def collide(_mine: Mine, _actor:PlayerActor):
     return collide(_actor, _mine)
 
 

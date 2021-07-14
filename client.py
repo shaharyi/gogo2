@@ -88,7 +88,7 @@ async def main():
         print("Warning, no sound")
         pygame.mixer = None
 
-    for name in 'shoot boom bounce'.split():
+    for name in 'shoot boom bounce hit'.split():
         sound_bank[name] = util.load_sound(name + '.wav')
 
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
