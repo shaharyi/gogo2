@@ -41,6 +41,28 @@ def collide(_wall: Wall, _actor: SpriteActor):
     return collide(_actor, _wall)
 
 
+def center_inside(_a1: SpriteActor, _a2: SpriteActor):
+    return _a2.rect.collidepoint(_a1.rect.center)
+
+
+def most_collide(_a1: SpriteActor, _a2: SpriteActor):
+    return center_inside(_a1, _a2) or center_inside(_a2, _a1)
+
+
+@multimethod
+def collide(_bullet: Bullet, _wall: Wall):
+    if most_collide(_bullet, _wall):
+        _bullet.bump()
+    else:
+        _bullet.bounce(_wall)
+    return 1
+
+
+@multimethod
+def collide(_wall: Wall, _bullet: Bullet):
+    return collide(_bullet, _wall)
+
+
 @multimethod
 def collide(_actor:Robot, _mine: Mine):
     _actor.bump(damage=25)

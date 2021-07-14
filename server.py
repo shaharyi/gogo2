@@ -9,7 +9,7 @@ from pygame import Rect
 from player_actor import PlayerActor
 from actor import serialize_sprites
 from collide import *
-from config_template import *
+from config import *
 
 
 class Server:
@@ -41,14 +41,14 @@ class Server:
         VWall((370, 232), g)
         VWall((370, 264), g)
         VWall((370, 296), g)
-        HWall((378, 200), g)
-        HWall((378, 320), g)
+        HWall((386, 196), g)
+        HWall((386, 316), g)
         VWall((100, 200), g)
         VWall((100, 232), g)
         VWall((100, 264), g)
         VWall((100, 296), g)
-        HWall((76, 192), g)
-        HWall((76, 328), g)
+        HWall((68, 196), g)
+        HWall((68, 316), g)
 
     def transmit(self, msg):
         buf = pickle.dumps(msg)
@@ -166,11 +166,14 @@ class Server:
 
         # Initialise clock
         clock = pygame.time.Clock()
+        elapsed = 0
         try:
             while True:
                 # Make sure game doesn't run at more than X frames per second
-                clock.tick(30)
-                self.pack_and_transmit()
+                elapsed += clock.tick(300)
+                if elapsed >= 0.04:
+                    self.pack_and_transmit()
+                    elapsed = 0
                 # Yield to asyncio event-loop
                 await asyncio.sleep(0)
                 self.spawner_group.update()

@@ -7,7 +7,7 @@ import pygame
 
 import util
 from actor import SpriteActor
-from config_template import *
+from config import *
 
 
 class VectorActor(SpriteActor):
@@ -64,7 +64,7 @@ class Robot(VectorActor):
 class BasicRobot(Robot):
     """A dumb robot that goes in circles
     """
-    def __init__(self, velocity=20, image_angle_deg=ORIG_ANGLE, *args, **kwargs):
+    def __init__(self, velocity=2, image_angle_deg=ORIG_ANGLE, *args, **kwargs):
         super().__init__(velocity=velocity, image_angle_deg=image_angle_deg, *args, **kwargs)
 
     def bump(self, damage=0):
@@ -128,10 +128,16 @@ class Mine(SpriteActor):
 
 class Bullet(VectorActor):
     def __init__(self, shooter, center, angle, *args, **kwargs):
-        super().__init__(velocity=20, center=center, angle=angle, *args, **kwargs)
+        super().__init__(velocity=2, center=center, angle=angle, *args, **kwargs)
         self.shooter = shooter
         self.damage = 1
         self.hitpoints = 1
+
+    def bounce(self, wall):
+        if isinstance(wall, VWall):
+            self.angle = pi - self.angle
+        elif isinstance(wall, HWall):
+            self.angle = -self.angle
 
     def bump(self, damage=0):  # hit a mine or a wall
         self.die()
@@ -152,7 +158,7 @@ class HWall(Wall):
 
 
 class MinedropperRobot(Robot):
-    def __init__(self, velocity=1, image_angle_deg=ORIG_ANGLE, *args, **kwargs):
+    def __init__(self, velocity=0.1, image_angle_deg=ORIG_ANGLE, *args, **kwargs):
         super().__init__(velocity=velocity, image_angle_deg=image_angle_deg, *args, **kwargs)
         self.hitpoints = 5
         self.delta = 0.0
@@ -205,6 +211,6 @@ class Spawner(SpriteActor):
         elif time.time() >= self.time: # every five seconds
             self.time = time.time() + 5.0
             angle = random.random() * 2 * pi;
-            velocity = random.random() * 10.0 + 1
+            velocity = random.random() * 1.0 + 1
             newRobot = random.choice(self.robots)
             newRobot(groups=self.target_groups, center=self.rect.center, angle=angle, velocity=velocity)

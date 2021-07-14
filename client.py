@@ -11,7 +11,7 @@ import pygame
 import pickle
 
 import util
-from config_template import *
+from config import *
 
 images = {}   # filepath -> Surface
 surfaces = []
