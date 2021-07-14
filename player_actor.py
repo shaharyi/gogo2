@@ -74,6 +74,7 @@ class PlayerActor(Robot):
         v = [center[0] + d * cos(self.angle),
              center[1] - d * sin(self.angle)]
         Bullet(shooter=self, center=v, angle=self.angle, groups=self.groups())
+        self.append_sound('shoot')
 
     def killed_actor(self, _target):
         "Called when we kill another player or robot"

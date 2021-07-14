@@ -66,3 +66,17 @@ async def read_tcp_msg(reader):
         r = len(data)
     msg = pickle.loads(data)
     return r, msg
+
+
+def load_sound(file):
+    """ because pygame can be be compiled without mixer.
+    """
+    if not pygame.mixer:
+        return None
+    file = os.path.join("data", file)
+    try:
+        sound = pygame.mixer.Sound(file)
+        return sound
+    except pygame.error:
+        print("Warning, unable to load, %s" % file)
+    return None

@@ -15,12 +15,14 @@ from config import *
 
 images = {}   # filepath -> Surface
 surfaces = []
+sounds = []
 
 ORIG_ANGLE_RAD = ORIG_ANGLE * pi/180
 
 
 def process_render_data(data):
     surf_list = []
+    sounds = []
     for render_props in data:
         props = dict(render_props)
         fp = props['filepath']
@@ -32,15 +34,18 @@ def process_render_data(data):
         if diff:
             img = util.rotate(img, degrees(diff))
         surf_list.append((img, rect.topleft))
-    return surf_list
+        sounds += props['sounds']
+    return surf_list, sounds
 
 
 def process_udp_msg(msg):
-    op, prop_surfaces, raw_surfaces = msg[0], msg[1], msg[2]
-    global surfaces
+    op, pay = msg[0], msg[1:]
+    global surfaces, sounds
     surfaces = []
     if op == 'RENDER_DATA':
-        surfaces = process_render_data(prop_surfaces)
+        prop_surfaces, raw_surfaces = pay
+        surfaces, new_sounds = process_render_data(prop_surfaces)
+        sounds += new_sounds
         more = [(pygame.image.frombuffer(s[0], s[1][2:4], 'RGBA'), s[1][0:2]) for s in raw_surfaces]
         surfaces += more
     else:
@@ -71,9 +76,21 @@ class UDPClientProtocol(DatagramProtocol):
         print("Connection closed")
 
 
+sound_bank = {}
+
+
 async def main():
-    # Initialise screen
+    # Initialize pygame
+    if pygame.get_sdl_version()[0] == 2:
+        pygame.mixer.pre_init(44100, 32, 2, 1024)
     pygame.init()
+    if pygame.mixer and not pygame.mixer.get_init():
+        print("Warning, no sound")
+        pygame.mixer = None
+
+    for name in 'shoot boom bounce'.split():
+        sound_bank[name] = util.load_sound(name + '.wav')
+
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption('Gogo2')
 
@@ -138,7 +155,7 @@ async def main():
     else:
         util.log('Unknown msg: ' + opcode)
 
-    surf_list = process_render_data(static_sprites)
+    surf_list, _ = process_render_data(static_sprites)
     for surf, pos in surf_list:
         background.blit(surf, pos)
 
@@ -170,6 +187,13 @@ async def main():
             screen.blit(background, (0, 0))
             for surf, pos in surfaces:
                 screen.blit(surf, pos)
+            global sounds
+            if pygame.mixer:
+                for s in sounds:
+                    sound = sound_bank.get(s)
+                    sound and sound.play()
+            sounds = []
+
             pygame.display.flip()
 
     print('Close UDP connection')

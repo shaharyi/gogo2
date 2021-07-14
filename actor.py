@@ -27,7 +27,17 @@ class SpriteActor(Sprite):
         self.pos = topleft and topleft or (center[0] - s[0], center[1] - s[1])
         tl = tuple(map(round, self.pos))
         self.rect = self.image.get_rect(topleft=tl)
-        self.render_props = ['filepath', 'rect']
+        self._sounds = []
+        self.render_props = ['filepath', 'rect', 'sounds']
+
+    @property
+    def sounds(self):
+        ret = tuple(self._sounds)
+        self._sounds = []
+        return ret
+
+    def append_sound(self, name):
+        self._sounds.append(name)
 
     def handle_update(self):
         # update() is inherited from Sprite
