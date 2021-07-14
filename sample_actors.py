@@ -27,9 +27,11 @@ class VectorActor(SpriteActor):
             self.image_angle = self.angle
 
     def update(self):
-        (a, m) = self.angle, self.velocity
+        (a, m, (x, y)) = self.angle, self.velocity, self.pos
         (dx, dy) = (m * cos(a), m * sin(a))
-        self.rect = self.rect.move(dx, -dy)
+        x1, y1 = x + dx, y + dy
+        self.pos = (x1, y1)
+        self.rect = self.rect.move(round(x1 - x), round(y - y1))
         self.rotate()
 
     def bump(self):
@@ -64,7 +66,7 @@ class Robot(VectorActor):
 class BasicRobot(Robot):
     """A dumb robot that goes in circles
     """
-    def __init__(self, velocity=2, image_angle_deg=ORIG_ANGLE, *args, **kwargs):
+    def __init__(self, velocity=BASE_SPEED/2, image_angle_deg=ORIG_ANGLE, *args, **kwargs):
         super().__init__(velocity=velocity, image_angle_deg=image_angle_deg, *args, **kwargs)
 
     def bump(self, damage=0):
@@ -117,10 +119,9 @@ class Score(SpriteActor):
 
 
 class Mine(SpriteActor):
-    def __init__(self, center, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.hitpoints = 1
-        self.rect.center = center
 
     def bump(self):  # dropped over a wall
         self.die()
@@ -128,7 +129,7 @@ class Mine(SpriteActor):
 
 class Bullet(VectorActor):
     def __init__(self, shooter, center, angle, *args, **kwargs):
-        super().__init__(velocity=2, center=center, angle=angle, *args, **kwargs)
+        super().__init__(velocity=BASE_SPEED, center=center, angle=angle, *args, **kwargs)
         self.shooter = shooter
         self.damage = 1
         self.hitpoints = 1
@@ -158,7 +159,7 @@ class HWall(Wall):
 
 
 class MinedropperRobot(Robot):
-    def __init__(self, velocity=0.1, image_angle_deg=ORIG_ANGLE, *args, **kwargs):
+    def __init__(self, velocity=BASE_SPEED/5, image_angle_deg=ORIG_ANGLE, *args, **kwargs):
         super().__init__(velocity=velocity, image_angle_deg=image_angle_deg, *args, **kwargs)
         self.hitpoints = 5
         self.delta = 0.0
@@ -211,6 +212,6 @@ class Spawner(SpriteActor):
         elif time.time() >= self.time: # every five seconds
             self.time = time.time() + 5.0
             angle = random.random() * 2 * pi;
-            velocity = random.random() * 1.0 + 1
+            velocity = random.random() * BASE_SPEED + 1
             newRobot = random.choice(self.robots)
             newRobot(groups=self.target_groups, center=self.rect.center, angle=angle, velocity=velocity)

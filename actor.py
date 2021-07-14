@@ -23,8 +23,10 @@ class SpriteActor(Sprite):
             self.image_cache[self.filepath] = self.image
 
         self.orig_image = self.image.copy()
-        location = topleft and dict(topleft=topleft) or center and dict(center=center) or {}
-        self.rect = self.image.get_rect(**location)
+        s = self.image.get_rect().size
+        self.pos = topleft and topleft or (center[0] - s[0], center[1] - s[1])
+        tl = tuple(map(round, self.pos))
+        self.rect = self.image.get_rect(topleft=tl)
         self.render_props = ['filepath', 'rect']
 
     def handle_update(self):

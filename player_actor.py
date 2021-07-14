@@ -3,15 +3,13 @@ from math import sin, cos, pi
 
 from pygame import K_RIGHT, K_LEFT, K_DOWN, K_UP, K_SPACE, K_m, KEYDOWN, KEYUP
 
-import util
 from util import sign
-from sprite_sheet import *
-
+from config import *
 from sample_actors import Robot, Mine, Bullet, Score, MinedropperRobot, BasicRobot
 
 THRUST = 1.5
-FRICTION = 0.1
-ANGLE_DELTA = 1*pi/180
+FRICTION = BASE_SPEED/10
+ANGLE_DELTA = 10/BASE_SPEED*pi/180
 
 # player 1 keyboard mapping
 p1_key_down_reversed = dict(left=K_LEFT, right=K_RIGHT, forward=K_UP, backward=K_DOWN, shoot=K_SPACE, drop_mine=K_m)
@@ -35,7 +33,7 @@ class PlayerActor(Robot):
     Receive INPUT msgs (originated at Client Display, forwarded by Server) and change velocity/angle accordingly.
     """
     nplayers = 0
-    MAX_VELOCITY = 2
+    MAX_VELOCITY = BASE_SPEED
 
     def __init__(self, topleft, image_angle_deg=0, angle=pi/2, local=True, groups=(), num=nplayers, *args, **kwargs):
         # location = location or (PlayerActor.nplayers%2 and 50  or World._singleton.width-50, 250)

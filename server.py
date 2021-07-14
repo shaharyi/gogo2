@@ -170,7 +170,7 @@ class Server:
         try:
             while True:
                 # Make sure game doesn't run at more than X frames per second
-                elapsed += clock.tick(300)
+                elapsed += clock.tick(50)
                 if elapsed >= 0.04:
                     self.pack_and_transmit()
                     elapsed = 0
