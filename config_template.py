@@ -1,7 +1,8 @@
 
 TCP_PORT, UDP_PORT = 3000, 3001
 
-WIDTH, HEIGHT = 640, 480
+WIDTH, HEIGHT = 1024, 768
+
 DEBUG = True
 
 IMAGE_EXT = 'png'
@@ -19,4 +20,4 @@ BCAST_IP = '192.168.1.255'  # local Broadcast ip
 SERVER_TCP_LOCAL_ADDR = '0.0.0.0'  # all interfaces
 
 ORIG_ANGLE = 90
-BASE_SPEED = 10
+BASE_SPEED = 5
