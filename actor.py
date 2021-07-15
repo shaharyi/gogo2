@@ -1,5 +1,6 @@
 from pdb import set_trace
 import os
+import time
 from pygame.sprite import Sprite
 import pygame
 
@@ -10,11 +11,13 @@ from util import log
 class SpriteActor(Sprite):
     image_cache = {}
 
-    def __init__(self, image_file=None, topleft=None, center=None, groups=()):
+    def __init__(self, image_file=None, topleft=None, center=None, ttl=0, groups=()):
         super().__init__(*groups)
         image_file = image_file or self.__class__.__name__
         self.filepath = os.path.join('data', image_file) + '.' + IMAGE_EXT
         self.image = self.image_cache.get(self.filepath)
+        self.ttl = ttl
+        self.ttl_callback = self.die
         if not self.image:
             log('* loading ' + self.filepath)
             self.image = pygame.image.load(self.filepath)
@@ -28,6 +31,7 @@ class SpriteActor(Sprite):
         tl = tuple(map(round, self.pos))
         self.rect = self.image.get_rect(topleft=tl)
         self._sounds = []
+        self.start_time = time.time()
         self.render_props = ['filepath', 'rect', 'sounds']
 
     @property
@@ -50,6 +54,10 @@ class SpriteActor(Sprite):
     def get_render_data(self):
         data = [(k, getattr(self, k)) for k in self.render_props]
         return tuple(data)
+
+    def update(self):
+        if self.ttl and time.time() - self.start_time >= self.ttl:
+            self.ttl_callback()
 
 
 def serialize_sprites(*groups):

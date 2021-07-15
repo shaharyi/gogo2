@@ -91,7 +91,7 @@ def collide(_mine: Mine, _actor:PlayerActor):
 @multimethod
 def collide(_bullet: Bullet, _actor: Robot):
     _actor.bump(damage=_bullet.damage)
-    if _actor.hitpoints == 0:
+    if _actor.hitpoints == 0 and _bullet.shooter:
         _bullet.shooter.killed_actor(_actor)
     _bullet.die()
     return 1

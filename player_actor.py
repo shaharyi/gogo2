@@ -66,7 +66,7 @@ class PlayerActor(Robot):
         d = self.rect.h
         v = [center[0] - d * cos(self.angle),
              center[1] + d * sin(self.angle)]
-        Mine(center=v, groups=self.groups())
+        Mine(center=v, who=self, groups=self.groups())
 
     def shoot(self):
         center = self.rect.center

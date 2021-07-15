@@ -33,6 +33,7 @@ class VectorActor(SpriteActor):
         self.pos = (x1, y1)
         self.rect = self.rect.move(round(x1 - x), round(y - y1))
         self.rotate()
+        super().update()
 
     def bump(self):
         pass
@@ -122,11 +123,19 @@ class Score(SpriteActor):
 
 
 class Mine(SpriteActor):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, who=None, ttl=MINE_TTL, *args, **kwargs):
+        super().__init__(ttl=ttl, *args, **kwargs)
+        self.who = who
         self.hitpoints = 1
+        self.ttl_callback = self.blast
 
     def bump(self):  # dropped over a wall
+        self.die()
+
+    def blast(self):
+        for i in range(36):
+            b = Bullet(self.who, self.rect.center, angle=i*10, ttl=MINE_BLAST_TTL, groups=self.groups())
+            i == 0 and b.append_sound('boom')
         self.die()
 
 
@@ -189,8 +198,11 @@ class MinedropperRobot(Robot):
             d = self.rect.h
             v = [center[0] - d * cos(self.angle),
                  center[1] + d * sin(self.angle)]
-            Mine(center=v, groups=self.groups())
+            Mine(who=self, center=v, groups=self.groups())
         self.angle += self.delta
+
+    def killed_actor(self, _actor):
+        pass
 
     def bump(self, damage=0):
         self.angle += radians(73.0)
