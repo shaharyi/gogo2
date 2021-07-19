@@ -75,6 +75,7 @@ def load_sound(file):
         return None
     file = os.path.join("data", file)
     try:
+        print('Loading ' + file)
         sound = pygame.mixer.Sound(file)
         return sound
     except pygame.error:
