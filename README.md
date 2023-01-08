@@ -51,3 +51,6 @@
 ## Known issues
 * On multiple machins, sometimes hangs
 *
+
+## For further guide, see 
+`gogo2/pypyvenv/site-packages/pygame/examples`

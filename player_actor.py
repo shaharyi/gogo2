@@ -9,7 +9,7 @@ from sample_actors import Robot, Mine, Bullet, Score, MinedropperRobot, BasicRob
 
 THRUST = 1.5
 FRICTION = BASE_SPEED/10
-ANGLE_DELTA = 10/BASE_SPEED*pi/180
+ANGLE_DELTA = 40/BASE_SPEED*pi/180
 
 # player 1 keyboard mapping
 p1_key_down_reversed = dict(left=K_LEFT, right=K_RIGHT, forward=K_UP, backward=K_DOWN, shoot=K_SPACE, drop_mine=K_m)

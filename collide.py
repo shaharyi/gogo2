@@ -39,7 +39,7 @@ def collide(_actor: SpriteActor, _wall: Wall):
 
 @multimethod
 def collide(_wall: Wall, _actor: SpriteActor):
-    return collide(_actor, _wall)
+    return 1
 
 
 def center_inside(_a1: SpriteActor, _a2: SpriteActor):
