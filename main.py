@@ -65,13 +65,13 @@ def create_walls(static_group):
     VWall((370, 232), g)
     VWall((370, 264), g)
     VWall((370, 296), g)
-    HWall((378, 200), g)
-    HWall((378, 320), g)
+    HWall((386, 192), g)
+    HWall((386, 328), g)
     VWall((100, 200), g)
     VWall((100, 232), g)
     VWall((100, 264), g)
     VWall((100, 296), g)
-    HWall((76, 192), g)
+    HWall((68, 192), g)
     HWall((76, 328), g)
 
 

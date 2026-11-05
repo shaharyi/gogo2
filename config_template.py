@@ -21,3 +21,6 @@ SERVER_TCP_LOCAL_ADDR = '0.0.0.0'  # all interfaces
 
 ORIG_ANGLE = 90
 BASE_SPEED = 5
+
+MINE_TTL = 5  # seconds until a dropped mine blasts
+MINE_BLAST_TTL = 0.5  # seconds the blast bullets live
