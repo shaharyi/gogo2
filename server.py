@@ -69,8 +69,8 @@ class Server:
     def pack_surfaces(self):
         surfaces = []
         for p in self.players:
-            sprit = p.score
-            surfaces.append((pygame.image.tostring(sprit.image, 'RGBA'), sprit.rect))
+            for sprit in (p.score, p.health_bar):
+                surfaces.append((pygame.image.tostring(sprit.image, 'RGBA'), sprit.rect))
         return tuple(surfaces)
 
     def pack_and_transmit(self):

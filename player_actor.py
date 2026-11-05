@@ -5,7 +5,7 @@ from pygame import K_RIGHT, K_LEFT, K_DOWN, K_UP, K_SPACE, K_m, KEYDOWN, KEYUP
 
 from util import sign
 from config import *
-from sample_actors import Robot, Mine, Bullet, Score, MinedropperRobot, BasicRobot
+from sample_actors import Robot, Mine, Bullet, Score, HealthBar, MinedropperRobot, BasicRobot
 
 THRUST = 1.5
 FRICTION = BASE_SPEED/10
@@ -45,6 +45,7 @@ class PlayerActor(Robot):
         self.score = Score(topleft=score_loc, groups=groups)
         self.angle_d = 0
         self.hitpoints = 20
+        self.health_bar = HealthBar(self, topleft=(score_loc[0], score_loc[1] + 34), groups=groups)
         self.thrust = 0
         index = num if local else 0
         kmap_down = {k: getattr(self, v) for k, v in mappings[KEYDOWN][index].items()}

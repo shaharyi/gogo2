@@ -122,6 +122,26 @@ class Score(SpriteActor):
             self.showing = self.value
 
 
+class HealthBar(SpriteActor):
+    """Bar showing the hitpoints of a player, shrinking and turning red as they drop."""
+    def __init__(self, player, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.image = self.image.copy()  # image is cached and shared; draw on our own copy
+        self.player = player
+        self.max_hitpoints = player.hitpoints
+        self.showing = None
+
+    def update(self):
+        hp = max(self.player.hitpoints, 0)
+        if hp != self.showing:
+            self.showing = hp
+            w, h = self.image.get_size()
+            ratio = hp / self.max_hitpoints
+            self.image.fill((60, 60, 60))
+            color = (int(255 * (1 - ratio)), int(200 * ratio), 0)
+            pygame.draw.rect(self.image, color, (0, 0, round(w * ratio), h))
+
+
 class Mine(SpriteActor):
     def __init__(self, who=None, ttl=MINE_TTL, *args, **kwargs):
         super().__init__(ttl=ttl, *args, **kwargs)
