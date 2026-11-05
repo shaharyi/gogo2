@@ -168,9 +168,9 @@ class Mine(SpriteActor):
         self.die()
 
     def blast(self):
-        for i in range(36):
-            b = Bullet(self.who, self.rect.center, angle=i*10, ttl=MINE_BLAST_TTL, groups=self.groups())
-            i == 0 and b.append_sound('boom')
+        for i in range(DEBRIS_COUNT):
+            d = Debris(self.who, self.rect.center, groups=self.groups())
+            i == 0 and d.append_sound('boom')
         self.die()
 
 
@@ -191,6 +191,41 @@ class Bullet(VectorActor):
 
     def bump(self, damage=0):  # hit a mine or a wall
         self.die()
+
+
+DEBRIS_COUNT = 40  # pieces thrown by an exploding mine
+
+
+class Debris(Bullet):
+    """A tiny glowing fragment of an explosion.
+    Flies off in a random direction at about bullet speed, cools from yellow to dark red as it
+    burns out, and hurts like a bullet (it is one, as far as collisions go).
+    """
+    PALETTE = [(252, 228, 104), (232, 196, 80), (212, 168, 60), (196, 140, 44), (176, 112, 28), (160, 84, 16)]
+    EMBER = (80, 16, 0)  # the color it has cooled to when it burns out
+    MIN_SIZE, MAX_SIZE = 3, 8  # pixels; a bullet is 10
+
+    def __init__(self, shooter, center, groups=()):
+        ttl = MINE_BLAST_TTL * random.uniform(0.6, 1.4)
+        super().__init__(shooter, center, angle=random.uniform(0, 2 * pi), ttl=ttl, groups=groups,
+                         image_file='Bullet')  # the file is only a placeholder; the image is drawn below
+        self.velocity = BASE_SPEED * random.uniform(0.7, 1.3)
+        size = random.randint(self.MIN_SIZE, self.MAX_SIZE)
+        self.start_color = self.color = random.choice(self.PALETTE)
+        self.image = self.orig_image = pygame.Surface((size, size))
+        self.image.fill(self.color)
+        self.rect = self.image.get_rect(center=center)
+        self.pos = self.rect.topleft
+        self.render_props.append('color')  # clients draw a square of this color in the size of the rect
+
+    def rotate(self):
+        pass  # a square needs no rotating
+
+    def update(self):
+        super().update()
+        t = min((time.time() - self.start_time) / self.ttl, 1)
+        self.color = util.lerp_color(self.start_color, self.EMBER, t)
+        self.image.fill(self.color)
 
 
 class Wall(SpriteActor):

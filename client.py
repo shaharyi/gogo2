@@ -28,11 +28,16 @@ def process_render_data(data):
         fp = props['filepath']
         angle = props.get('angle')
         rect = props['rect']
-        img = images.get(fp)
-        img = img or pygame.image.load(props['filepath']).convert()
-        diff = angle and angle - props['orig_image_angle']
-        if diff:
-            img = util.rotate(img, degrees(diff))
+        color = props.get('color')
+        if color:  # debris: a plain square in the size of the rect
+            img = pygame.Surface(rect.size)
+            img.fill(color)
+        else:
+            img = images.get(fp)
+            img = img or pygame.image.load(props['filepath']).convert()
+            diff = angle and angle - props['orig_image_angle']
+            if diff:
+                img = util.rotate(img, degrees(diff))
         alpha = props.get('alpha')
         if alpha is not None:  # fading explosion: resize to the server's rect and fade
             img = pygame.transform.scale(img, rect.size)

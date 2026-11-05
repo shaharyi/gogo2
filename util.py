@@ -53,6 +53,11 @@ def rotate(img, deg):
     return new_surf
 
 
+def lerp_color(c1, c2, t):
+    """Color t (0..1) of the way from c1 to c2"""
+    return tuple(round(a + (b - a) * t) for a, b in zip(c1, c2))
+
+
 async def read_tcp_msg(reader):
     l = await reader.read(4)
     if len(l) <= 0:
