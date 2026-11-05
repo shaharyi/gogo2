@@ -88,21 +88,36 @@ class BasicRobot(Robot):
 
 
 class Explosion(VectorActor):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    """A fireball that spins, swells and fades away, centered on the given center."""
+    DURATION = 0.6  # seconds
+    START_SCALE, END_SCALE = 0.6, 2.4
+    SPIN = 0.35  # radians per frame
+
+    def __init__(self, center=None, *args, **kwargs):
+        super().__init__(center=center, *args, **kwargs)
+        if center:
+            self.rect.center = center  # SpriteActor puts the sprite's corner, not its middle, at center
+            self.pos = self.rect.topleft
         self.time = time.time()
-        self.last_rotate = 0.0
+        self.alpha = 255
+        self.render_props.append('alpha')  # clients fade and resize the image to match the rect
         self.physical = False
         self.append_sound('boom')
 
     def update(self):
-        super().update()
-        now = time.time()
-        if not self.last_rotate or now - self.last_rotate > 0.1:
-            self.last_rotate = now
-            self.angle = random.random() * 2 * pi
-        if now - self.time >= + 3.0:
+        t = (time.time() - self.time) / self.DURATION
+        if t >= 1:
             self.die()
+            return
+        self.angle += self.SPIN
+        super().update()  # rotates the image
+        swell = 1 - (1 - t) ** 2  # fast at first, then slowing down
+        size = round(self.orig_image.get_width() * (self.START_SCALE + (self.END_SCALE - self.START_SCALE) * swell))
+        center = self.rect.center
+        self.alpha = round(255 * (1 - t) ** 1.5)
+        self.image = pygame.transform.scale(self.image, (size, size))
+        self.image.set_alpha(self.alpha)
+        self.rect = self.image.get_rect(center=center)
 
 
 class Score(SpriteActor):

@@ -33,6 +33,10 @@ def process_render_data(data):
         diff = angle and angle - props['orig_image_angle']
         if diff:
             img = util.rotate(img, degrees(diff))
+        alpha = props.get('alpha')
+        if alpha is not None:  # fading explosion: resize to the server's rect and fade
+            img = pygame.transform.scale(img, rect.size)
+            img.set_alpha(alpha)
         surf_list.append((img, rect.topleft))
         sounds += props['sounds']
     return surf_list, sounds
