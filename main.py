@@ -11,7 +11,7 @@ from config import *
 def main():
     # Initialise screen
     pygame.init()
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.SCALED if SCALED else 0)
     pygame.display.set_caption('Gogo2')
 
     # Fill background

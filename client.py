@@ -91,7 +91,7 @@ async def main():
     for name in 'shoot boom bounce hit'.split():
         sound_bank[name] = util.load_sound(name + '.wav')
 
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.SCALED if SCALED else 0)
     pygame.display.set_caption('Gogo2')
 
     # Fill background
