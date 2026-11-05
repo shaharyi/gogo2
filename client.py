@@ -190,7 +190,7 @@ async def main():
                 msg = util.prepare_msg(('NEW_PLAYER', udp_local_addr))
                 writer.write(msg)
             elif event.type in [pygame.KEYDOWN, pygame.KEYUP]:
-                msg = util.prepare_msg(('INPUT', event.type, event.key))
+                msg = util.prepare_msg(('INPUT', event.type, util.physical_key(event)))
                 writer.write(msg)
         if not done:
             screen.blit(background, (0, 0))

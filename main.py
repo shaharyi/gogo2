@@ -53,7 +53,7 @@ def main():
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                 player1 = PlayerActor(topleft=PLAYER_START, groups=(dynamic_group,))
             elif event.type in [pygame.KEYDOWN, pygame.KEYUP]:
-                player1.process_input((event.type, event.key))
+                player1.process_input((event.type, util.physical_key(event)))
 
         for sp in dynamic_group.sprites():
             screen.blit(background, sp.rect, sp.rect)

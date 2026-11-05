@@ -17,6 +17,18 @@ def log(s):
     logfile.flush()
 
 
+# Letter keys by their physical position, so they work in any keyboard layout (e.g. Hebrew)
+_LETTER_BY_SCANCODE = {getattr(pygame, 'KSCAN_' + c.upper()): getattr(pygame, 'K_' + c)
+                       for c in 'abcdefghijklmnopqrstuvwxyz'}
+
+
+def physical_key(event):
+    """The key of a KEYDOWN/KEYUP event, as if the keyboard layout were English.
+    event.key follows the active layout, and SDL can keep the old layout after switching
+    while the game runs. event.scancode is the physical key and does not."""
+    return _LETTER_BY_SCANCODE.get(getattr(event, 'scancode', None), event.key)
+
+
 def sign(x):
     return x > 0 and 1 or x < 0 and -1 or 0
 
