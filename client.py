@@ -171,8 +171,8 @@ async def main():
     while not done and not udp_transport.is_closing():
         # receive UDP packets
         await asyncio.sleep(0.01)
-        # Make sure game doesn't run at more than 60 frames per second
-        clock.tick(30)
+        # Make sure game doesn't run at more than FPS frames per second
+        clock.tick(FPS)
 
         for event in pygame.event.get():
             if event.type == QUIT or (event.type==pygame.KEYDOWN and event.key==pygame.K_ESCAPE):

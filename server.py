@@ -7,9 +7,13 @@ import pickle
 from pygame import Rect
 
 from player_actor import PlayerActor
+from sample_actors import create_walls, PLAYER_START
 from actor import serialize_sprites
 from collide import *
 from config import *
+
+
+SEND_INTERVAL_MS = 40  # send the screen state to clients 25 times per second
 
 
 class Server:
@@ -25,30 +29,17 @@ class Server:
 
     def new_player(self, num):
         # Initialise sprites
-        player = PlayerActor(topleft=self.screen_rect.center, local=False, groups=(self.dynamic_group,), num=num)
+        player = PlayerActor(topleft=PLAYER_START, local=False, groups=(self.dynamic_group,), num=num)
         self.players.append(player)
         return player
 
     def initialise_actors(self):
-        self.create_walls()
-        Spawner(topleft=(232, 232),  # center=self.screen_rect.center,
-                target_groups=(self.dynamic_group,),
-                groups=(self.spawner_group,))
+        create_walls(self.static_group)
+        spawner = Spawner(topleft=(0, 0),
+                          target_groups=(self.dynamic_group,),
+                          groups=(self.spawner_group,))
+        spawner.rect.center = self.screen_rect.center  # middle of the screen
 
-    def create_walls(self):
-        g = (self.static_group, )
-        VWall((370, 200), g)
-        VWall((370, 232), g)
-        VWall((370, 264), g)
-        VWall((370, 296), g)
-        HWall((386, 196), g)
-        HWall((386, 316), g)
-        VWall((100, 200), g)
-        VWall((100, 232), g)
-        VWall((100, 264), g)
-        VWall((100, 296), g)
-        HWall((68, 196), g)
-        HWall((68, 316), g)
 
     def transmit(self, msg):
         buf = pickle.dumps(msg)
@@ -169,11 +160,11 @@ class Server:
         elapsed = 0
         try:
             while True:
-                # Make sure game doesn't run at more than X frames per second
-                elapsed += clock.tick(50)
-                if elapsed >= 0.04:
+                # Make sure game doesn't run at more than FPS frames per second
+                elapsed += clock.tick(FPS)  # milliseconds
+                if elapsed >= SEND_INTERVAL_MS:
                     self.pack_and_transmit()
-                    elapsed = 0
+                    elapsed %= SEND_INTERVAL_MS
                 # Yield to asyncio event-loop
                 await asyncio.sleep(0)
                 self.spawner_group.update()

@@ -26,3 +26,5 @@ MINE_TTL = 5  # seconds until a dropped mine blasts
 MINE_BLAST_TTL = 0.5  # seconds the blast bullets live
 
 SCALED = False  # let pygame enlarge the window to fit the screen
+
+FPS = 30  # game updates per second, in both main.py and client-server mode

@@ -192,6 +192,24 @@ class HWall(Wall):
     pass
 
 
+CAMP_H = 152  # height of a camp: two 16px HWalls around four 32px VWalls, plus 8px of overhang
+CAMP_Y = (HEIGHT - CAMP_H) // 2  # camps are centered vertically on the screen
+LEFT_CAMP_X = 68  # left edge of the left camp; it opens towards the left edge of the screen
+# the right camp is the mirror image of the left one around the screen's vertical center line
+RIGHT_CAMP_X = WIDTH - LEFT_CAMP_X - 48
+# the player starts inside the right camp, centered between its HWalls
+PLAYER_START = (RIGHT_CAMP_X + 16, CAMP_Y + CAMP_H // 2 - 16)
+
+
+def create_walls(static_group):
+    g = (static_group, )
+    for x, hwall_x in ((LEFT_CAMP_X + 32, LEFT_CAMP_X), (RIGHT_CAMP_X, RIGHT_CAMP_X + 16)):
+        for i in range(4):
+            VWall((x, CAMP_Y + 8 + 32 * i), g)
+        HWall((hwall_x, CAMP_Y), g)
+        HWall((hwall_x, CAMP_Y + CAMP_H - 16), g)
+
+
 class MinedropperRobot(Robot):
     def __init__(self, velocity=BASE_SPEED/5, image_angle_deg=ORIG_ANGLE, *args, **kwargs):
         super().__init__(velocity=velocity, image_angle_deg=image_angle_deg, *args, **kwargs)
